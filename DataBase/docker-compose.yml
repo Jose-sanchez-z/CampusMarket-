@@ -1,0 +1,22 @@
+# Levanta PostgreSQL local para el equipo:  docker compose up -d
+# Las migraciones se aplican con scripts/reset.sh (o con Flyway desde Spring Boot).
+services:
+  db:
+    image: postgres:16
+    container_name: campusmarket-db
+    environment:
+      POSTGRES_DB: campusmarket
+      POSTGRES_USER: campus
+      POSTGRES_PASSWORD: campus
+    ports:
+      - "5432:5432"
+    volumes:
+      - campusmarket_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U campus -d campusmarket"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  campusmarket_pgdata:
