@@ -19,6 +19,7 @@ Otra base: `DATABASE_URL="postgresql://user:pass@host:5432/db" ./scripts/reset.s
 
 ```
 db/migration/V1__usuarios_tokens_sesiones.sql   S1-T13  tablas base
+db/migration/V2__sesiones_id_hash_token.sql     S1-T13  sesiones.id = hash SHA-256 (pedido de E08)
 db/seeds/S1_datos_prueba.sql                    S1-T14  datos de prueba
 db/tests/smoke_test.sql                         S1-T14  restricciones + flujo HU-01..03
 scripts/reset.sh | smoke_test.sh
@@ -40,7 +41,7 @@ usuarios 1 ───< tokens
 |---|---|---|
 | `usuarios` | `id`, `correo`, `nombre`, `password_hash`, `estado`, `rol`, `fecha_creacion`, `fecha_actualizacion` | `correo` UNIQUE y siempre en minúsculas (CHECK) · formato de correo · `estado` ∈ {PENDIENTE, ACTIVA} (default PENDIENTE) · `rol` ∈ {ESTUDIANTE, ADMIN} (default ESTUDIANTE) |
 | `tokens` | `id`, `usuario_id`, `token_hash`, `tipo`, `fecha_vencimiento`, `usado`, `fecha_uso`, `intentos_fallidos`, `fecha_creacion` | FK → usuarios (CASCADE) · `tipo` ∈ {VERIFICACION, RECUPERACION} · vencimiento > creación · `usado` ⇔ `fecha_uso` no nula |
-| `sesiones` | `id` (UUID), `usuario_id`, `fecha_creacion`, `fecha_vencimiento`, `revocada`, `fecha_revocacion` | FK → usuarios (CASCADE) · vencimiento > creación · `revocada` ⇔ `fecha_revocacion` no nula |
+| `sesiones` | `id` (VARCHAR(64) = SHA-256 hex del token de la cookie), `usuario_id`, `fecha_creacion`, `fecha_vencimiento`, `revocada`, `fecha_revocacion` (opcional) | FK → usuarios (CASCADE) · `id` debe ser hex minúsculas de 64 chars (CHECK) · vencimiento > creación |
 
 Sesión válida = `NOT revocada AND fecha_vencimiento > now()`.
 Token utilizable = `NOT usado AND fecha_vencimiento > now()`.
@@ -65,7 +66,7 @@ Contraseñas: estudiantes `Campus123*`, admin `Admin123*`.
 1. **Tabla de tokens única con `tipo`.** Sirve para verificación (Sprint 1) y recuperación (HU-04, Sprint 2), lo que
    resuelve el punto abierto "¿quién crea la tabla de recuperación?". Si prefieren tablas separadas, se cambia en V2.
 2. **Hash del token** (E07): las semillas asumen SHA-256 hex. Si usan BCrypt u otro, avisar y ajusto las semillas.
-3. **Nombre de la cookie** lo define E08 (S1-T11); la BD solo guarda el `id` UUID de la sesión.
+3. **Nombre de la cookie** lo define E08 (S1-T11); la BD solo guarda el hash SHA-256 del token (`sesiones.id`), nunca el token en claro.
 4. **Rol:** `ESTUDIANTE` / `ADMIN` (el documento usa `ADMIN` en el Sprint 2).
 5. **Correo en minúsculas:** el backend debe normalizar (`toLowerCase()`) antes de insertar; si no, la BD rechaza
    el insert (CHECK). Así `Ana@x.co` y `ana@x.co` no pueden coexistir.
