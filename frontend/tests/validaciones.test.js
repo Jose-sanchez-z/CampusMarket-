@@ -30,12 +30,25 @@ test('nombre vacío o muy corto es inválido', () => {
   assert.equal(validarNombre('Camilo Torres'), '')
 })
 
-test('correo institucional válido', () => {
+test('sin dominio configurado se acepta cualquier correo válido (Gmail, Hotmail...)', () => {
+  assert.equal(validarCorreo('camilo.torres@gmail.com', ''), '')
+  assert.equal(validarCorreo('  Camilo@Hotmail.com ', ''), '')
+  assert.equal(validarCorreo('ctorres@unipamplona.edu.co', ''), '')
+  assert.equal(validarCorreo('ctorres@gmail.com'), '')
+})
+
+test('sin dominio configurado se sigue rechazando un formato inválido', () => {
+  assert.notEqual(validarCorreo('camilo@gmail', ''), '')
+  assert.notEqual(validarCorreo('camilo gmail.com', ''), '')
+  assert.notEqual(validarCorreo('', ''), '')
+})
+
+test('con dominio configurado: correo institucional válido', () => {
   assert.equal(validarCorreo('ctorres@unipamplona.edu.co', DOMINIO), '')
   assert.equal(validarCorreo('  CTorres@UNIPAMPLONA.EDU.CO ', DOMINIO), '')
 })
 
-test('correo de otro dominio es rechazado', () => {
+test('con dominio configurado: correo de otro dominio es rechazado', () => {
   assert.match(validarCorreo('ctorres@gmail.com', DOMINIO), /institucional/)
   assert.match(validarCorreo('ctorres@unipamplona.edu.co.fake.com', DOMINIO), /institucional/)
   assert.match(validarCorreo('ctorres@fakeunipamplona.edu.co', DOMINIO), /institucional/)
@@ -64,6 +77,20 @@ test('la confirmación debe ser igual a la contraseña', () => {
   assert.equal(validarConfirmacion('Campus@2026', 'Campus@2026'), '')
   assert.match(validarConfirmacion('Campus@2026', 'Campus@2024'), /no coinciden/)
   assert.notEqual(validarConfirmacion('Campus@2026', ''), '')
+})
+
+test('formulario completo válido con Gmail (sin dominio obligatorio)', () => {
+  const errores = validarRegistro(
+    {
+      nombre: 'Camilo Torres',
+      correo: 'camilo.torres@gmail.com',
+      password: 'Campus@2026',
+      confirmacion: 'Campus@2026',
+      terminos: true
+    },
+    { dominio: '', passwordMin: 8 }
+  )
+  assert.ok(formularioValido(errores))
 })
 
 test('formulario completo válido', () => {

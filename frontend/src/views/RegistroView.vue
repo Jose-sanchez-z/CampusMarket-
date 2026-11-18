@@ -20,11 +20,12 @@ import {
   CORREO_MAX
 } from '@/utils/validaciones'
 import logoClaro from '@/assets/img/logo-claro.png'
-import logoOscuro from '@/assets/img/logo-oscuro.png'
 
 const router = useRouter()
 
-const DOMINIO = (import.meta.env.VITE_DOMINIO_INSTITUCIONAL || 'unipamplona.edu.co').replace(/^@/, '')
+// Vacío = se acepta cualquier correo válido (Gmail, Hotmail, institucional...).
+// Si el equipo decide exigir un dominio, basta con ponerlo en el .env.
+const DOMINIO = (import.meta.env.VITE_DOMINIO_INSTITUCIONAL || '').trim().replace(/^@/, '')
 const PASSWORD_MIN = Number(import.meta.env.VITE_PASSWORD_MIN) || 8
 const CAMPOS = ['nombre', 'correo', 'password', 'confirmacion', 'terminos']
 
@@ -165,7 +166,7 @@ async function enviar() {
     if (error?.status === 409) {
       errorApi.value = {
         tipo: 'duplicado',
-        mensaje: 'Este correo institucional ya está registrado en CampusMarket. Inicia sesión o recupera tu contraseña.'
+        mensaje: 'Este correo ya está registrado en CampusMarket. Inicia sesión o recupera tu contraseña.'
       }
       errores.correo = 'Este correo ya tiene una cuenta asociada.'
       await nextTick()
@@ -188,13 +189,11 @@ async function enviar() {
         <div>
           <h1 id="titulo-registro" class="registro__titulo">Crear cuenta.</h1>
           <p class="registro__subtitulo">
-            Acceso exclusivo con correo institucional certificado (@{{ DOMINIO }})
+            <template v-if="DOMINIO">Acceso exclusivo con correo institucional (@{{ DOMINIO }})</template>
+            <template v-else>Regístrate con tu correo electrónico para comprar y vender en tu universidad.</template>
           </p>
         </div>
-        <picture>
-          <source :srcset="logoOscuro" media="(prefers-color-scheme: dark)" />
-          <img :src="logoClaro" alt="CampusMarket" class="registro__logo" width="96" height="68" />
-        </picture>
+        <img :src="logoClaro" alt="CampusMarket" class="registro__logo" width="96" height="68" />
       </header>
 
       <!-- Error general de la API (409 duplicado, 400, sin conexión...) -->
@@ -214,7 +213,7 @@ async function enviar() {
       <div v-else class="alerta alerta--info">
         <p class="alerta__texto">
           <strong>Importante.</strong> Al completar el formulario pasarás a verificar tu cuenta con el
-          código que enviaremos a tu correo institucional.
+          código que enviaremos a tu correo.
         </p>
       </div>
 
@@ -243,7 +242,7 @@ async function enviar() {
 
           <!-- Correo -->
           <div class="campo" :class="{ 'campo--error': errores.correo }">
-            <label for="correo" class="campo__etiqueta">Correo institucional</label>
+            <label for="correo" class="campo__etiqueta">Correo electrónico</label>
             <input
               id="correo"
               ref="correoRef"
@@ -253,7 +252,7 @@ async function enviar() {
               autocomplete="email"
               inputmode="email"
               :maxlength="CORREO_MAX"
-              :placeholder="`usuario@${DOMINIO}`"
+              :placeholder="DOMINIO ? `usuario@${DOMINIO}` : 'tucorreo@gmail.com'"
               :disabled="cargando"
               :aria-invalid="Boolean(errores.correo)"
               :aria-describedby="errores.correo ? idError('correo') : undefined"

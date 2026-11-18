@@ -28,13 +28,13 @@ Otros comandos:
 | Variable | Valor por defecto | Para qué sirve |
 |---|---|---|
 | `VITE_API_URL` | `http://localhost:8080` | URL base de la API |
-| `VITE_DOMINIO_INSTITUCIONAL` | `unipamplona.edu.co` | Dominio de correo aceptado en el registro |
+| `VITE_DOMINIO_INSTITUCIONAL` | *(vacío)* | Vacío = acepta cualquier correo válido (Gmail, Hotmail…). Si se pone un dominio, solo acepta ese |
 | `VITE_PASSWORD_MIN` | `8` | Longitud mínima de la contraseña |
 | `VITE_API_SIMULADA` | `false` | `true` para probar la pantalla sin backend |
 
 Para valores personales crea un `.env.local` (no se sube a git).
 
-**Modo simulado:** con `VITE_API_SIMULADA=true` el registro no llama a la API: responde `202` y, si el correo empieza por `duplicado` (por ejemplo `duplicado@unipamplona.edu.co`), responde `409`. Sirve para maquetar mientras el backend no está listo. La evidencia final de la tarea se toma con la API real.
+**Modo simulado:** con `VITE_API_SIMULADA=true` el registro no llama a la API: responde `202` y, si el correo empieza por `duplicado` (por ejemplo `duplicado@gmail.com`), responde `409`. Sirve para maquetar mientras el backend no está listo. La evidencia final de la tarea se toma con la API real.
 
 ## Estructura
 
@@ -59,6 +59,8 @@ frontend/
 ```
 
 ## Reglas del Sprint 1
+
+- La interfaz usa siempre el **modo claro**. Los colores del modo oscuro quedan definidos en `base.css` bajo `:root[data-tema='oscuro']` por si más adelante se agrega un botón para cambiar de tema.
 
 - La sesión viaja **solo** en la cookie HttpOnly del servidor. Nunca guardes tokens en `localStorage` ni `sessionStorage`.
 - Todas las peticiones salen con `credentials: 'include'`.

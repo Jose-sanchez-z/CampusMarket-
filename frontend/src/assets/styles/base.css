@@ -6,6 +6,9 @@
    ===================================================================== */
 
 :root {
+  /* La aplicación usa SIEMPRE el modo claro (también en controles nativos). */
+  color-scheme: light;
+
   /* Colores — modo claro */
   --cm-fondo: #f5f3ff;
   --cm-superficie: #ffffff;
@@ -45,28 +48,28 @@
   --cm-sombra: 0 10px 30px rgba(30, 42, 74, 0.10);
 }
 
-/* Modo oscuro según la preferencia del sistema */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --cm-fondo: #0b111e;
-    --cm-superficie: #0f172a;
-    --cm-campo: #131d2e;
-    --cm-borde: #334155;
-    --cm-texto: #f8fafc;
-    --cm-texto-suave: #94a3b8;
-    --cm-primario: #2563eb;
-    --cm-primario-hover: #1d4ed8;
-    --cm-primario-suave: #1e293b;
-    --cm-info-fondo: #131d2e;
-    --cm-info-texto: #dbeafe;
-    --cm-error: #fca5a5;
-    --cm-error-fondo: #451a1a;
-    --cm-error-borde: #f87171;
-    --cm-exito: #6ee7b7;
-    --cm-exito-fondo: #064e3b;
-    --cm-foco: #60a5fa;
-    --cm-sombra: 0 10px 30px rgba(0, 0, 0, 0.5);
-  }
+/* Modo oscuro: desactivado por defecto. Solo se aplica si alguien agrega
+   data-tema="oscuro" en <html> (por ejemplo, un botón futuro de cambio de tema). */
+:root[data-tema='oscuro'] {
+  color-scheme: dark;
+  --cm-fondo: #0b111e;
+  --cm-superficie: #0f172a;
+  --cm-campo: #131d2e;
+  --cm-borde: #334155;
+  --cm-texto: #f8fafc;
+  --cm-texto-suave: #94a3b8;
+  --cm-primario: #2563eb;
+  --cm-primario-hover: #1d4ed8;
+  --cm-primario-suave: #1e293b;
+  --cm-info-fondo: #131d2e;
+  --cm-info-texto: #dbeafe;
+  --cm-error: #fca5a5;
+  --cm-error-fondo: #451a1a;
+  --cm-error-borde: #f87171;
+  --cm-exito: #6ee7b7;
+  --cm-exito-fondo: #064e3b;
+  --cm-foco: #60a5fa;
+  --cm-sombra: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 *,

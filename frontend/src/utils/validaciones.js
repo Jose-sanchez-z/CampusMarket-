@@ -31,10 +31,14 @@ export function validarNombre(nombre) {
   return ''
 }
 
+/**
+ * Valida el formato del correo. Si se indica `dominio`, además exige que el
+ * correo sea de ese dominio; si viene vacío, se acepta cualquier correo válido.
+ */
 export function validarCorreo(correo, dominio) {
   const valor = normalizarCorreo(correo)
   const dominioEsperado = String(dominio ?? '').trim().toLowerCase().replace(/^@/, '')
-  if (!valor) return 'Escribe tu correo institucional.'
+  if (!valor) return 'Escribe tu correo electrónico.'
   if (valor.length > CORREO_MAX) return 'El correo es demasiado largo.'
   if (!FORMATO_CORREO.test(valor)) return 'El formato del correo no es válido.'
   if (dominioEsperado && !valor.endsWith(`@${dominioEsperado}`)) {

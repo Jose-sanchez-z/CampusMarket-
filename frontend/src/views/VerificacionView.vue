@@ -23,7 +23,7 @@ const vieneDeRegistro = computed(() => route.query.registro === 'ok')
       </h1>
 
       <p class="verificacion__texto" role="status">
-        Hemos enviado un código a tu correo institucional. Debes verificarlo para acceder a tu
+        Hemos enviado un código a tu correo. Debes verificarlo para acceder a tu
         catálogo universitario.
       </p>
 
