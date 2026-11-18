@@ -60,6 +60,8 @@ frontend/
 
 ## Reglas del Sprint 1
 
+- La pantalla de registro replica los mockups de `Diseno/` ("crear cuenta pantalla compu.png" y "error al crear cuenta.png"). Los textos están juntos en la constante `TEXTOS` de `RegistroView.vue`.
+- La tipografía Inter y los iconos Material Symbols se cargan desde Google Fonts (`index.html`), igual que en el diseño: se necesita internet para verlos.
 - La interfaz usa siempre el **modo claro**. Los colores del modo oscuro quedan definidos en `base.css` bajo `:root[data-tema='oscuro']` por si más adelante se agrega un botón para cambiar de tema.
 
 - La sesión viaja **solo** en la cookie HttpOnly del servidor. Nunca guardes tokens en `localStorage` ni `sessionStorage`.
