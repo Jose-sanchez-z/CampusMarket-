@@ -1,0 +1,196 @@
+/* =====================================================================
+   Estilos base de CampusMarket (S1-T03).
+   Valores tomados de los diseños de frontend/Diseno y del prototipo Stitch.
+   E06 los formaliza como sistema de componentes en S1-T07; si cambian,
+   basta con ajustar estas variables.
+   ===================================================================== */
+
+:root {
+  /* Colores — modo claro */
+  --cm-fondo: #f5f3ff;
+  --cm-superficie: #ffffff;
+  --cm-campo: #eef0fb;
+  --cm-borde: #d6dbea;
+  --cm-texto: #1e2a4a;
+  --cm-texto-suave: #5b6478;
+  --cm-primario: #0052cc;
+  --cm-primario-hover: #0043a8;
+  --cm-primario-suave: #e3ebff;
+  --cm-info-fondo: #7ea2f7;
+  --cm-info-texto: #0f1d3d;
+  --cm-error: #b42318;
+  --cm-error-fondo: #fdd8d6;
+  --cm-error-borde: #e04f45;
+  --cm-exito: #067647;
+  --cm-exito-fondo: #dcfae6;
+  --cm-foco: #2563eb;
+
+  /* Tipografía */
+  --cm-fuente: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --cm-texto-sm: 0.75rem;   /* 12px */
+  --cm-texto-md: 0.875rem;  /* 14px */
+  --cm-texto-lg: 1rem;      /* 16px */
+  --cm-titulo: 1.875rem;    /* 30px */
+
+  /* Espaciados */
+  --cm-esp-xs: 0.25rem;
+  --cm-esp-sm: 0.5rem;
+  --cm-esp-md: 1rem;
+  --cm-esp-lg: 1.5rem;
+  --cm-esp-xl: 2rem;
+
+  /* Bordes y sombras */
+  --cm-radio: 0.5rem;
+  --cm-radio-lg: 0.75rem;
+  --cm-sombra: 0 10px 30px rgba(30, 42, 74, 0.10);
+}
+
+/* Modo oscuro según la preferencia del sistema */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --cm-fondo: #0b111e;
+    --cm-superficie: #0f172a;
+    --cm-campo: #131d2e;
+    --cm-borde: #334155;
+    --cm-texto: #f8fafc;
+    --cm-texto-suave: #94a3b8;
+    --cm-primario: #2563eb;
+    --cm-primario-hover: #1d4ed8;
+    --cm-primario-suave: #1e293b;
+    --cm-info-fondo: #131d2e;
+    --cm-info-texto: #dbeafe;
+    --cm-error: #fca5a5;
+    --cm-error-fondo: #451a1a;
+    --cm-error-borde: #f87171;
+    --cm-exito: #6ee7b7;
+    --cm-exito-fondo: #064e3b;
+    --cm-foco: #60a5fa;
+    --cm-sombra: 0 10px 30px rgba(0, 0, 0, 0.5);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--cm-fondo);
+  color: var(--cm-texto);
+  font-family: var(--cm-fuente);
+  font-size: var(--cm-texto-md);
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--cm-primario);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Foco visible para navegación con teclado */
+:focus-visible {
+  outline: 3px solid var(--cm-foco);
+  outline-offset: 2px;
+}
+
+/* Texto solo para lectores de pantalla */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Contenedor centrado de las pantallas de acceso */
+.cm-pagina-acceso {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--cm-esp-xl) var(--cm-esp-md);
+}
+
+.cm-tarjeta {
+  width: 100%;
+  max-width: 760px;
+  background: var(--cm-superficie);
+  border: 1px solid var(--cm-borde);
+  border-radius: var(--cm-radio-lg);
+  box-shadow: var(--cm-sombra);
+  padding: var(--cm-esp-xl);
+}
+
+@media (max-width: 480px) {
+  .cm-tarjeta {
+    padding: var(--cm-esp-lg) var(--cm-esp-md);
+  }
+}
+
+/* Botón principal */
+.cm-boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cm-esp-sm);
+  width: 100%;
+  min-height: 48px;
+  padding: var(--cm-esp-sm) var(--cm-esp-md);
+  border: none;
+  border-radius: var(--cm-radio);
+  background: var(--cm-primario);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.cm-boton:hover:not(:disabled) {
+  background: var(--cm-primario-hover);
+}
+
+.cm-boton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Indicador de carga */
+.cm-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: cm-girar 0.8s linear infinite;
+}
+
+@keyframes cm-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-spinner {
+    animation-duration: 2s;
+  }
+}

@@ -1,0 +1,19 @@
+# Dependencias y compilados
+node_modules/
+dist/
+
+# Variables de entorno personales (el .env compartido sí se versiona)
+.env.local
+.env.*.local
+
+# Registros
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Editor y sistema
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
