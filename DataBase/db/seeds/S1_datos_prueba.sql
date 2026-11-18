@@ -23,14 +23,14 @@ TRUNCATE TABLE sesiones, tokens, usuarios RESTART IDENTITY CASCADE;
 -- ---------------------------------------------------------------------
 INSERT INTO usuarios (correo, nombre, password_hash, estado, rol) VALUES
  -- id 1: administrador activo
- ('admin@campus.edu.co',      'Admin Campus',        '$2a$10$0j3yYCva271yy4mSr6oBeeVbWT9Rdcr.bvkd.TMdMyTp9fBTmXGsm', 'ACTIVA',    'ADMIN'),
+ ('admin@gmail.com',      'Admin Campus',        '$2a$10$0j3yYCva271yy4mSr6oBeeVbWT9Rdcr.bvkd.TMdMyTp9fBTmXGsm', 'ACTIVA',    'ADMIN'),
  -- id 2,3: estudiantes activos
- ('activa1@campus.edu.co',    'Ana Activa Uno',      '$2a$10$Ben9BJv9fnYLxeZx6QnxqeES4f42MOoXZOJfX8jYTYgkK8GLR3G7e', 'ACTIVA',    'ESTUDIANTE'),
- ('activa2@campus.edu.co',    'Luis Activo Dos',     '$2a$10$Ben9BJv9fnYLxeZx6QnxqeES4f42MOoXZOJfX8jYTYgkK8GLR3G7e', 'ACTIVA',    'ESTUDIANTE'),
+ ('activa1@gmail.com',    'Ana Activa Uno',      '$2a$10$Ben9BJv9fnYLxeZx6QnxqeES4f42MOoXZOJfX8jYTYgkK8GLR3G7e', 'ACTIVA',    'ESTUDIANTE'),
+ ('activa2@gmail.com',    'Luis Activo Dos',     '$2a$10$Ben9BJv9fnYLxeZx6QnxqeES4f42MOoXZOJfX8jYTYgkK8GLR3G7e', 'ACTIVA',    'ESTUDIANTE'),
  -- id 4,5,6: pendientes (token vigente / vigente con intentos / vencido)
- ('pendiente1@campus.edu.co', 'Paula Pendiente Uno', '$2a$10$Ben9BJv9fnYLxeZx6QnxqeES4f42MOoXZOJfX8jYTYgkK8GLR3G7e', 'PENDIENTE', 'ESTUDIANTE'),
- ('pendiente2@campus.edu.co', 'Pedro Pendiente Dos', '$2a$10$Ben9BJv9fnYLxeZx6QnxqeES4f42MOoXZOJfX8jYTYgkK8GLR3G7e', 'PENDIENTE', 'ESTUDIANTE'),
- ('vencido@campus.edu.co',    'Vera Vencida',        '$2a$10$Ben9BJv9fnYLxeZx6QnxqeES4f42MOoXZOJfX8jYTYgkK8GLR3G7e', 'PENDIENTE', 'ESTUDIANTE');
+ ('pendiente1@gmail.com', 'Paula Pendiente Uno', '$2a$10$Ben9BJv9fnYLxeZx6QnxqeES4f42MOoXZOJfX8jYTYgkK8GLR3G7e', 'PENDIENTE', 'ESTUDIANTE'),
+ ('pendiente2@gmail.com', 'Pedro Pendiente Dos', '$2a$10$Ben9BJv9fnYLxeZx6QnxqeES4f42MOoXZOJfX8jYTYgkK8GLR3G7e', 'PENDIENTE', 'ESTUDIANTE'),
+ ('vencido@gmail.com',    'Vera Vencida',        '$2a$10$Ben9BJv9fnYLxeZx6QnxqeES4f42MOoXZOJfX8jYTYgkK8GLR3G7e', 'PENDIENTE', 'ESTUDIANTE');
 
 -- ---------------------------------------------------------------------
 -- TOKENS  (vigentes, vencidos y usados)
