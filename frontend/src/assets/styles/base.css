@@ -1,0 +1,246 @@
+/* =====================================================================
+   Estilos base de CampusMarket (S1-T03).
+   Valores tomados de los diseños de frontend/Diseno y del prototipo Stitch.
+   E06 los formaliza como sistema de componentes en S1-T07; si cambian,
+   basta con ajustar estas variables.
+   ===================================================================== */
+
+:root {
+  /* La aplicación usa SIEMPRE el modo claro (también en controles nativos). */
+  color-scheme: light;
+
+  /* Colores — modo claro (medidos sobre los mockups de frontend/Diseno) */
+  --cm-fondo: #f8f5ff;              /* fondo de la página */
+  --cm-superficie: #ffffff;         /* tarjeta */
+  --cm-campo: #f1efff;              /* campos y caja de requisitos */
+  --cm-superficie-alta: #e0e0ff;    /* botón deshabilitado */
+  --cm-secundario-fondo: #e7e6ff;   /* botón secundario (¿Olvidaste tu contraseña?) */
+  --cm-borde: #e0e0ff;
+  --cm-texto: #282b51;              /* títulos, etiquetas y texto principal */
+  --cm-texto-suave: #555881;        /* subtítulos, iconos y textos secundarios */
+  --cm-primario: #0050d4;           /* botón principal, enlaces, checks */
+  --cm-primario-hover: #0043b3;
+  --cm-primario-suave: #e3e8ff;
+  --cm-info-fondo: #7b9cff;         /* aviso "Regla." */
+  --cm-info-texto: #0c0a00;
+  --cm-error: #b31b25;              /* textos y bordes de error */
+  --cm-error-fondo: #fdb9b9;        /* aviso de conflicto 409 */
+  --cm-error-borde: #b31b25;
+  --cm-exito: #067647;
+  --cm-exito-fondo: #dcfae6;
+  --cm-foco: #0050d4;
+
+  /* Tipografía (escala del diseño) */
+  --cm-fuente: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --cm-label-sm: 11px;    /* line-height 14px, 600 */
+  --cm-body-sm: 12px;     /* line-height 16px, 400 */
+  --cm-label-md: 12px;    /* line-height 16px, 500 */
+  --cm-body-md: 14px;     /* line-height 20px, 400 */
+  --cm-label-lg: 14px;    /* line-height 20px, 600 */
+  --cm-headline-lg: 30px; /* line-height 38px, 700 */
+  --cm-texto-sm: var(--cm-body-sm);
+  --cm-texto-md: var(--cm-body-md);
+  --cm-texto-lg: 16px;
+  --cm-titulo: var(--cm-headline-lg);
+
+  /* Espaciados */
+  --cm-esp-xs: 0.25rem;
+  --cm-esp-sm: 0.5rem;
+  --cm-esp-md: 1rem;
+  --cm-esp-lg: 1.5rem;
+  --cm-esp-xl: 2rem;
+  --cm-esp-2xl: 3rem;
+
+  /* Bordes y sombras (radios del diseño: lg = 4px, xl = 8px) */
+  --cm-radio: 0.25rem;
+  --cm-radio-lg: 0.5rem;
+  --cm-sombra: 0 10px 15px -3px rgba(40, 43, 81, 0.10), 0 4px 6px -4px rgba(40, 43, 81, 0.10);
+}
+
+/* Iconos Material Symbols (mismos del diseño) */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  user-select: none;
+}
+
+/* Modo oscuro: desactivado por defecto. Solo se aplica si alguien agrega
+   data-tema="oscuro" en <html> (por ejemplo, un botón futuro de cambio de tema). */
+:root[data-tema='oscuro'] {
+  color-scheme: dark;
+  --cm-fondo: #0b111e;
+  --cm-superficie: #0f172a;
+  --cm-campo: #131d2e;
+  --cm-borde: #334155;
+  --cm-texto: #f8fafc;
+  --cm-texto-suave: #94a3b8;
+  --cm-primario: #2563eb;
+  --cm-primario-hover: #1d4ed8;
+  --cm-primario-suave: #1e293b;
+  --cm-info-fondo: #131d2e;
+  --cm-info-texto: #dbeafe;
+  --cm-error: #fca5a5;
+  --cm-error-fondo: #451a1a;
+  --cm-error-borde: #f87171;
+  --cm-exito: #6ee7b7;
+  --cm-exito-fondo: #064e3b;
+  --cm-foco: #60a5fa;
+  --cm-sombra: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  background: var(--cm-fondo);
+  color: var(--cm-texto);
+  font-family: var(--cm-fuente);
+  font-size: var(--cm-texto-md);
+  line-height: 20px;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: var(--cm-primario);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* Foco visible para navegación con teclado */
+:focus-visible {
+  outline: 3px solid var(--cm-foco);
+  outline-offset: 2px;
+}
+
+/* Texto solo para lectores de pantalla */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Contenedor centrado de las pantallas de acceso (py 48px, px 32px como el diseño) */
+.cm-pagina-acceso {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--cm-esp-2xl) var(--cm-esp-xl);
+}
+
+/* Tarjeta: blanca, radio 8px, sombra suave, sin borde visible */
+.cm-tarjeta {
+  width: 100%;
+  max-width: 760px;
+  background: var(--cm-superficie);
+  border-radius: var(--cm-radio-lg);
+  box-shadow: var(--cm-sombra);
+  padding: var(--cm-esp-xl);
+}
+
+@media (max-width: 480px) {
+  .cm-pagina-acceso {
+    padding: var(--cm-esp-lg) var(--cm-esp-md);
+  }
+
+  .cm-tarjeta {
+    padding: var(--cm-esp-lg) var(--cm-esp-md);
+  }
+}
+
+/* Botón principal: py 16px, radio 8px, 14px semibold, icono a la derecha */
+.cm-boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--cm-esp-xs);
+  width: 100%;
+  padding: var(--cm-esp-md);
+  border: none;
+  border-radius: var(--cm-radio-lg);
+  background: var(--cm-primario);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: var(--cm-label-lg);
+  line-height: 20px;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+.cm-boton .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.cm-boton:hover:not(:disabled) {
+  background: var(--cm-primario-hover);
+}
+
+/* Estado deshabilitado del diseño (fondo lila, texto gris) */
+.cm-boton:disabled,
+.cm-boton--bloqueado {
+  background: var(--cm-superficie-alta);
+  color: var(--cm-texto-suave);
+  cursor: not-allowed;
+}
+
+/* Mientras carga se mantiene azul */
+.cm-boton--cargando:disabled {
+  background: var(--cm-primario);
+  color: #ffffff;
+  opacity: 0.85;
+  cursor: progress;
+}
+
+/* Indicador de carga */
+.cm-spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #ffffff;
+  border-radius: 50%;
+  animation: cm-girar 0.8s linear infinite;
+}
+
+@keyframes cm-girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-spinner {
+    animation-duration: 2s;
+  }
+}
