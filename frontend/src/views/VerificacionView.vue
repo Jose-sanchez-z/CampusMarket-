@@ -22,6 +22,12 @@ const TEXTOS = {
 const route = useRoute()
 const correo = computed(() => (typeof route.query.correo === 'string' ? route.query.correo : ''))
 const vieneDeRegistro = computed(() => route.query.registro === 'ok')
+
+// Hora de envío del código y nombre (vienen del registro en history.state).
+const estadoHistorial = {
+  enviadoEn: window.history.state?.enviadoEn ?? Date.now(),
+  nombre: window.history.state?.nombre ?? ''
+}
 </script>
 
 <template>
@@ -44,10 +50,10 @@ const vieneDeRegistro = computed(() => route.query.registro === 'ok')
       </div>
 
       <div class="verificacion__acciones">
-        <!-- S1-T04: este paso abrirá el formulario del código (POST /auth/verificar). -->
+        <!-- Lleva a la pantalla del código (S1-T04) conservando la hora de envío y el nombre. -->
         <RouterLink
           v-if="vieneDeRegistro"
-          :to="{ name: 'verificacion', query: { correo } }"
+          :to="{ name: 'verificar-codigo', query: { correo }, state: estadoHistorial }"
           class="cm-boton verificacion__boton"
         >
           {{ TEXTOS.boton }}

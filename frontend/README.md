@@ -30,11 +30,13 @@ Otros comandos:
 | `VITE_API_URL` | `http://localhost:8080` | URL base de la API |
 | `VITE_DOMINIO_INSTITUCIONAL` | *(vacío)* | Vacío = acepta cualquier correo válido (Gmail, Hotmail…). Si se pone un dominio, solo acepta ese |
 | `VITE_PASSWORD_MIN` | `8` | Longitud mínima de la contraseña |
-| `VITE_API_SIMULADA` | `false` | `true` para probar la pantalla sin backend |
+| `VITE_API_SIMULADA` | `false` | `true` para probar las pantallas sin backend |
+| `VITE_TOKEN_MINUTOS` | `15` | Vigencia del código de verificación (igual al backend) |
+| `VITE_REENVIO_SEGUNDOS` | `60` | Segundos que se bloquea "Reenviar código" tras usarlo |
 
 Para valores personales crea un `.env.local` (no se sube a git).
 
-**Modo simulado:** con `VITE_API_SIMULADA=true` el registro no llama a la API: responde `202` y, si el correo empieza por `duplicado` (por ejemplo `duplicado@gmail.com`), responde `409`. Sirve para maquetar mientras el backend no está listo. La evidencia final de la tarea se toma con la API real.
+**Modo simulado:** con `VITE_API_SIMULADA=true` no se llama a la API. Registro: responde `202` y, si el correo empieza por `duplicado` (por ejemplo `duplicado@gmail.com`), responde `409`. Verificación: el código `123456` activa la cuenta, `999999` simula demasiados intentos (`429`) y cualquier otro es incorrecto (`422`). Sirve para maquetar mientras el backend no está listo. La evidencia final de la tarea se toma con la API real.
 
 ## Estructura
 
@@ -74,5 +76,6 @@ frontend/
 | Ruta | Tarea | Estado |
 |---|---|---|
 | `/registro` | S1-T03 (E04) | Listo |
-| `/verificar` | S1-T04 (E04) | Solo mensaje de "código enviado"; falta el formulario del token |
+| `/verificar?registro=ok` | S1-T03 (E04) | "¡Registro exitoso!" |
+| `/verificar/codigo` | S1-T04 (E04) | Listo: código de 6 dígitos, contador de 15 min, reenvío con bloqueo, estados de error y éxito |
 | `/login` | S1-T06 (E05) | Marcador de posición |

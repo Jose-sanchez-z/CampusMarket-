@@ -281,7 +281,13 @@ async function enviar() {
     const correo = form.correo
     form.password = ''
     form.confirmacion = ''
-    await router.push({ name: 'verificacion', query: { correo, registro: 'ok' } })
+    // state (en memoria del historial, no en localStorage): hora de envío del
+    // código para el contador de 15 min (S1-T04) y nombre para la pantalla de éxito.
+    await router.push({
+      name: 'verificacion',
+      query: { correo, registro: 'ok' },
+      state: { enviadoEn: Date.now(), nombre: form.nombre }
+    })
   } catch (error) {
     if (error?.status === 409) {
       errorApi.value = { tipo: 'duplicado', mensaje: T.value.conflictoTexto }
