@@ -6,9 +6,11 @@
 // Cada validador devuelve un mensaje de error o '' si el valor es válido.
 // =====================================================================
 
-// Límites tomados de la migración V1 (tabla usuarios).
-export const NOMBRE_MAX = 120
-export const CORREO_MAX = 255
+// Límites iguales a los del backend (RegistroRequest de S1-T09, E07):
+// nombre ≤ 100, correo ≤ 150 y contraseña entre 8 y 72 (72 = límite de BCrypt).
+export const NOMBRE_MAX = 100
+export const CORREO_MAX = 150
+export const PASSWORD_MAX = 72
 
 // Formato general de correo (mismo criterio que el CHECK de la base de datos).
 const FORMATO_CORREO = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
@@ -65,6 +67,7 @@ export function validarPassword(password, minimo = 8) {
   const valor = String(password ?? '')
   if (!valor) return 'Escribe una contraseña.'
   if (/\s/.test(valor)) return 'La contraseña no puede contener espacios.'
+  if (valor.length > PASSWORD_MAX) return `La contraseña no puede superar ${PASSWORD_MAX} caracteres.`
   const pendientes = reglasPassword(valor, minimo).filter((regla) => !regla.cumple)
   if (pendientes.length) {
     return `La contraseña debe tener: ${pendientes.map((r) => r.texto.toLowerCase()).join(', ')}.`
