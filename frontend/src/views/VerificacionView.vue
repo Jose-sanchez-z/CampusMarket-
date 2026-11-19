@@ -7,6 +7,7 @@
 // =====================================================================
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { BaseCard } from '@/components/ui'
 
 const route = useRoute()
 const correo = computed(() => (typeof route.query.correo === 'string' ? route.query.correo : ''))
@@ -15,7 +16,7 @@ const vieneDeRegistro = computed(() => route.query.registro === 'ok')
 
 <template>
   <main class="cm-pagina-acceso">
-    <section class="cm-tarjeta verificacion" aria-labelledby="titulo-verificacion">
+    <BaseCard size="sm" class="verificacion" aria-labelledby="titulo-verificacion">
       <div class="verificacion__icono" aria-hidden="true">✉</div>
 
       <h1 id="titulo-verificacion" class="verificacion__titulo">
@@ -29,20 +30,17 @@ const vieneDeRegistro = computed(() => route.query.registro === 'ok')
 
       <p v-if="correo" class="verificacion__correo">{{ correo }}</p>
 
-      <!-- Aquí va el formulario del token (S1-T04). -->
+      <!-- Aquí va el formulario del token (S1-T04) con FormField + BaseInput + BaseButton. -->
 
       <p class="verificacion__pie">
         <RouterLink :to="{ name: 'registro' }">Volver a editar mis datos</RouterLink>
       </p>
-    </section>
+    </BaseCard>
   </main>
 </template>
 
 <style scoped>
-.verificacion {
-  max-width: 520px;
-  text-align: center;
-}
+.verificacion { text-align: center; }
 
 .verificacion__icono {
   width: 56px;
@@ -55,17 +53,8 @@ const vieneDeRegistro = computed(() => route.query.registro === 'ok')
   color: var(--cm-primario);
   font-size: 1.75rem;
 }
-
-.verificacion__titulo {
-  margin: 0 0 var(--cm-esp-sm);
-  font-size: 1.5rem;
-}
-
-.verificacion__texto {
-  margin: 0 0 var(--cm-esp-md);
-  color: var(--cm-texto-suave);
-}
-
+.verificacion__titulo { margin: 0 0 var(--cm-esp-sm); font-size: 1.5rem; }
+.verificacion__texto { margin: 0 0 var(--cm-esp-md); color: var(--cm-texto-suave); }
 .verificacion__correo {
   display: inline-block;
   margin: 0 0 var(--cm-esp-lg);
@@ -76,8 +65,5 @@ const vieneDeRegistro = computed(() => route.query.registro === 'ok')
   font-weight: 600;
   color: var(--cm-primario);
 }
-
-.verificacion__pie {
-  margin: 0;
-}
+.verificacion__pie { margin: 0; }
 </style>

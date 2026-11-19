@@ -10,6 +10,8 @@
 //    sesión (no se guarda nada en localStorage/sessionStorage).
 //  - CA-01-02: si el correo ya existe (409) se muestra un mensaje claro y
 //    no se crea otra cuenta.
+// S1-T07: la vista usa los componentes de '@/components/ui' en lugar de
+// estilos propios; aquí solo queda el estilo específico del registro.
 // =====================================================================
 import { computed, nextTick, reactive, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
@@ -23,6 +25,7 @@ import {
   NOMBRE_MAX,
   CORREO_MAX
 } from '@/utils/validaciones'
+import { BaseAlert, BaseButton, BaseCard, BaseInput, FormField } from '@/components/ui'
 import logo from '@/assets/img/logo-claro.png'
 
 const router = useRouter()
@@ -92,6 +95,7 @@ const enviado = ref(false)
 const errorApi = ref(null)
 
 // Referencias a los campos para mover el foco al primer error.
+// (BaseInput expone focus(); la casilla es un <input> nativo.)
 const nombreRef = ref(null)
 const correoRef = ref(null)
 const passwordRef = ref(null)
@@ -131,8 +135,8 @@ const textoBoton = computed(() => {
   return TEXTOS.boton
 })
 
+// Mientras carga, BaseButton dibuja su propio spinner.
 const iconoBoton = computed(() => {
-  if (cargando.value) return 'progress_activity'
   if (conflicto.value) return ''
   if (botonBloqueado.value) return 'block'
   return 'arrow_forward'
@@ -170,10 +174,6 @@ function alEscribir(campo) {
     errorApi.value = null
   }
   if (tocados[campo] || enviado.value) revisarCampo(campo)
-}
-
-function idError(campo) {
-  return `error-${campo}`
 }
 
 async function enfocarPrimerError() {
@@ -261,7 +261,7 @@ async function enviar() {
 
 <template>
   <main class="cm-pagina-acceso">
-    <section class="cm-tarjeta registro" aria-labelledby="titulo-registro">
+    <BaseCard class="registro" aria-labelledby="titulo-registro">
       <!-- Encabezado: título, subtítulo y logo -->
       <header class="registro__encabezado">
         <div>
@@ -272,171 +272,112 @@ async function enviar() {
       </header>
 
       <!-- Conflicto 409: correo ya registrado (CA-01-02) -->
-      <div v-if="conflicto" class="aviso aviso--error" role="alert">
-        <span class="material-symbols-outlined aviso__icono" aria-hidden="true">warning</span>
-        <div class="aviso__cuerpo">
-          <p class="aviso__titulo">{{ TEXTOS.conflictoTitulo }}</p>
-          <p class="aviso__texto">{{ errorApi.mensaje }}</p>
-          <div class="aviso__acciones">
-            <RouterLink :to="{ name: 'login', query: { correo: form.correo } }" class="aviso__boton aviso__boton--primario">
-              {{ TEXTOS.conflictoIniciar }}
-            </RouterLink>
-            <!-- La recuperación de contraseña se construye en S2-T03; por ahora lleva al login. -->
-            <RouterLink :to="{ name: 'login', query: { correo: form.correo } }" class="aviso__boton aviso__boton--secundario">
-              {{ TEXTOS.conflictoOlvido }}
-            </RouterLink>
-          </div>
-        </div>
-      </div>
+      <BaseAlert v-if="conflicto" tipo="error" icono="warning" :titulo="TEXTOS.conflictoTitulo">
+        {{ errorApi.mensaje }}
+        <template #acciones>
+          <BaseButton size="xs" :to="{ name: 'login', query: { correo: form.correo } }">
+            {{ TEXTOS.conflictoIniciar }}
+          </BaseButton>
+          <!-- La recuperación de contraseña se construye en S2-T03; por ahora lleva al login. -->
+          <BaseButton size="xs" variant="secondary" :to="{ name: 'login', query: { correo: form.correo } }">
+            {{ TEXTOS.conflictoOlvido }}
+          </BaseButton>
+        </template>
+      </BaseAlert>
 
       <!-- Otros errores de la API (400, sin conexión, 429...) -->
-      <div v-else-if="errorApi" class="aviso aviso--error" role="alert">
-        <span class="material-symbols-outlined aviso__icono" aria-hidden="true">error</span>
-        <div class="aviso__cuerpo">
-          <p class="aviso__titulo">{{ TEXTOS.errorTitulo }}</p>
-          <p class="aviso__texto">{{ errorApi.mensaje }}</p>
-        </div>
-      </div>
+      <BaseAlert v-else-if="errorApi" tipo="error" :titulo="TEXTOS.errorTitulo">
+        {{ errorApi.mensaje }}
+      </BaseAlert>
 
       <!-- Regla del flujo (CA-01-01) -->
-      <div v-else class="aviso aviso--info">
-        <span class="material-symbols-outlined aviso__icono" aria-hidden="true">info</span>
-        <div class="aviso__cuerpo">
-          <p class="aviso__titulo">{{ TEXTOS.reglaTitulo }}</p>
-          <p class="aviso__texto">{{ TEXTOS.reglaTexto }}</p>
-        </div>
-      </div>
+      <BaseAlert v-else tipo="info" :titulo="TEXTOS.reglaTitulo">{{ TEXTOS.reglaTexto }}</BaseAlert>
 
       <form class="registro__form" novalidate @submit.prevent="enviar">
         <div class="registro__grid">
-          <!-- Nombre y Apellidos -->
-          <div class="campo" :class="{ 'campo--error': errores.nombre }">
-            <label for="nombre" class="campo__etiqueta">
-              <span>{{ TEXTOS.nombre }}</span>
-            </label>
-            <div class="campo__control">
-              <span class="material-symbols-outlined campo__icono" aria-hidden="true">person</span>
-              <input
-                id="nombre"
-                ref="nombreRef"
-                v-model="form.nombre"
-                type="text"
-                class="campo__input"
-                autocomplete="name"
-                :maxlength="NOMBRE_MAX"
-                :placeholder="TEXTOS.nombreEjemplo"
-                :disabled="cargando"
-                :aria-invalid="Boolean(errores.nombre)"
-                :aria-describedby="errores.nombre ? idError('nombre') : undefined"
-                @blur="alSalir('nombre')"
-                @input="alEscribir('nombre')"
-              />
-            </div>
-            <p v-if="errores.nombre" :id="idError('nombre')" class="campo__error">
-              <span class="material-symbols-outlined" aria-hidden="true">close</span>{{ errores.nombre }}
-            </p>
-          </div>
+          <FormField id="nombre" :label="TEXTOS.nombre" :error="errores.nombre">
+            <BaseInput
+              ref="nombreRef"
+              v-model="form.nombre"
+              icon="person"
+              autocomplete="name"
+              :maxlength="NOMBRE_MAX"
+              :placeholder="TEXTOS.nombreEjemplo"
+              :disabled="cargando"
+              @blur="alSalir('nombre')"
+              @input="alEscribir('nombre')"
+            />
+          </FormField>
 
-          <!-- Correo -->
-          <div class="campo" :class="{ 'campo--error': errores.correo }">
-            <label for="correo" class="campo__etiqueta">
-              <span>{{ TEXTOS.correo }}</span>
-              <span v-if="conflicto" class="campo__etiqueta-estado">{{ TEXTOS.conflictoEtiqueta }}</span>
-            </label>
-            <div class="campo__control">
-              <span class="material-symbols-outlined campo__icono" aria-hidden="true">mail</span>
-              <input
-                id="correo"
-                ref="correoRef"
-                v-model="form.correo"
-                type="email"
-                class="campo__input"
-                :class="{ 'campo__input--icono-derecha': conflicto }"
-                autocomplete="email"
-                inputmode="email"
-                :maxlength="CORREO_MAX"
-                :placeholder="TEXTOS.correoEjemplo"
-                :disabled="cargando"
-                :aria-invalid="Boolean(errores.correo)"
-                :aria-describedby="errores.correo ? idError('correo') : undefined"
-                @blur="alSalir('correo')"
-                @input="alEscribir('correo')"
-              />
-              <span v-if="conflicto" class="material-symbols-outlined campo__icono-derecha" aria-hidden="true">cancel</span>
-            </div>
-            <p v-if="errores.correo" :id="idError('correo')" class="campo__error">
-              <template v-if="!conflicto"><span class="material-symbols-outlined" aria-hidden="true">close</span></template>{{ errores.correo }}
-            </p>
-          </div>
+          <FormField
+            id="correo"
+            :label="TEXTOS.correo"
+            :error="errores.correo"
+            :error-icono="conflicto ? '' : 'close'"
+            :estado="conflicto ? TEXTOS.conflictoEtiqueta : ''"
+          >
+            <BaseInput
+              ref="correoRef"
+              v-model="form.correo"
+              type="email"
+              icon="mail"
+              :icon-right="conflicto ? 'cancel' : ''"
+              autocomplete="email"
+              inputmode="email"
+              :maxlength="CORREO_MAX"
+              :placeholder="TEXTOS.correoEjemplo"
+              :disabled="cargando"
+              @blur="alSalir('correo')"
+              @input="alEscribir('correo')"
+            />
+          </FormField>
 
-          <!-- Contraseña -->
-          <div class="campo" :class="{ 'campo--error': errores.password, 'campo--valido': passwordValida }">
-            <label for="password" class="campo__etiqueta">
-              <span>{{ TEXTOS.password }}</span>
-              <span v-if="passwordValida" class="campo__etiqueta-estado">
-                <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
-                {{ TEXTOS.passwordValida }}
-              </span>
-            </label>
-            <div class="campo__control">
-              <span class="material-symbols-outlined campo__icono" aria-hidden="true">key</span>
-              <input
-                id="password"
-                ref="passwordRef"
-                v-model="form.password"
-                type="password"
-                class="campo__input"
-                :class="{ 'campo__input--icono-derecha': passwordValida }"
-                autocomplete="new-password"
-                placeholder="••••••••••••"
-                :disabled="cargando"
-                :aria-invalid="Boolean(errores.password)"
-                :aria-describedby="errores.password ? `reglas-password ${idError('password')}` : 'reglas-password'"
-                @blur="alSalir('password')"
-                @input="alEscribir('password')"
-              />
-              <span v-if="passwordValida" class="material-symbols-outlined campo__icono-derecha" aria-hidden="true">verified</span>
-            </div>
-            <p v-if="errores.password" :id="idError('password')" class="campo__error">
-              <span class="material-symbols-outlined" aria-hidden="true">close</span>{{ errores.password }}
-            </p>
-          </div>
+          <FormField
+            id="password"
+            :label="TEXTOS.password"
+            :error="errores.password"
+            :valid="passwordValida"
+            :estado="passwordValida ? TEXTOS.passwordValida : ''"
+            :estado-icono="passwordValida ? 'check_circle' : ''"
+            ayuda-id="reglas-password"
+          >
+            <BaseInput
+              ref="passwordRef"
+              v-model="form.password"
+              type="password"
+              icon="key"
+              :icon-right="passwordValida ? 'verified' : ''"
+              autocomplete="new-password"
+              placeholder="••••••••••••"
+              :disabled="cargando"
+              @blur="alSalir('password')"
+              @input="alEscribir('password')"
+            />
+          </FormField>
 
-          <!-- Confirmar contraseña -->
-          <div class="campo" :class="{ 'campo--error': errores.confirmacion }">
-            <label for="confirmacion" class="campo__etiqueta">
-              <span>{{ TEXTOS.confirmacion }}</span>
-              <span v-if="noCoincide" class="campo__etiqueta-estado">
-                <span class="material-symbols-outlined" aria-hidden="true">error</span>
-                {{ TEXTOS.noCoincide }}
-              </span>
-            </label>
-            <div class="campo__control">
-              <span class="material-symbols-outlined campo__icono" aria-hidden="true">lock_reset</span>
-              <input
-                id="confirmacion"
-                ref="confirmacionRef"
-                v-model="form.confirmacion"
-                type="password"
-                class="campo__input"
-                :class="{ 'campo__input--icono-derecha': noCoincide }"
-                autocomplete="new-password"
-                placeholder="••••••••••••"
-                :disabled="cargando"
-                :aria-invalid="Boolean(errores.confirmacion)"
-                :aria-describedby="errores.confirmacion ? idError('confirmacion') : undefined"
-                @blur="alSalir('confirmacion')"
-                @input="alEscribir('confirmacion')"
-              />
-              <span v-if="noCoincide" class="material-symbols-outlined campo__icono-derecha" aria-hidden="true">error</span>
-            </div>
-            <p v-if="errores.confirmacion" :id="idError('confirmacion')" class="campo__error">
-              <span class="material-symbols-outlined" aria-hidden="true">close</span>{{ errores.confirmacion }}
-            </p>
-          </div>
+          <FormField
+            id="confirmacion"
+            :label="TEXTOS.confirmacion"
+            :error="errores.confirmacion"
+            :estado="noCoincide ? TEXTOS.noCoincide : ''"
+            :estado-icono="noCoincide ? 'error' : ''"
+          >
+            <BaseInput
+              ref="confirmacionRef"
+              v-model="form.confirmacion"
+              type="password"
+              icon="lock_reset"
+              :icon-right="noCoincide ? 'error' : ''"
+              autocomplete="new-password"
+              placeholder="••••••••••••"
+              :disabled="cargando"
+              @blur="alSalir('confirmacion')"
+              @input="alEscribir('confirmacion')"
+            />
+          </FormField>
         </div>
 
-        <!-- Requisitos de seguridad en tiempo real -->
+        <!-- Requisitos de seguridad en tiempo real (específico de esta pantalla) -->
         <div id="reglas-password" class="requisitos">
           <p class="requisitos__titulo">{{ TEXTOS.requisitos }}</p>
           <ul class="requisitos__lista">
@@ -453,8 +394,8 @@ async function enviar() {
           </ul>
         </div>
 
-        <!-- Términos -->
-        <div class="campo campo--check" :class="{ 'campo--error': errores.terminos }">
+        <!-- Términos: FormField sin etiqueta, solo para el mensaje de error y la accesibilidad -->
+        <FormField id="terminos" :error="errores.terminos" v-slot="{ describedby, invalid }">
           <div class="check">
             <input
               id="terminos"
@@ -462,47 +403,38 @@ async function enviar() {
               v-model="form.terminos"
               type="checkbox"
               :disabled="cargando"
-              :aria-invalid="Boolean(errores.terminos)"
-              :aria-describedby="errores.terminos ? idError('terminos') : undefined"
+              :aria-invalid="invalid"
+              :aria-describedby="describedby"
               @change="alSalir('terminos')"
             />
-            <label for="terminos">
+            <label for="terminos" :class="{ 'check__etiqueta--error': invalid }">
               {{ TEXTOS.terminosAntes }}<a href="#" @click.prevent>{{ TEXTOS.terminosEnlace }}</a>{{ TEXTOS.terminosDespues }}
             </label>
           </div>
-          <p v-if="errores.terminos" :id="idError('terminos')" class="campo__error">
-            <span class="material-symbols-outlined" aria-hidden="true">close</span>{{ errores.terminos }}
-          </p>
-        </div>
+        </FormField>
 
-        <button
+        <BaseButton
           type="submit"
-          class="cm-boton"
-          :class="{ 'cm-boton--cargando': cargando }"
-          :disabled="cargando || botonBloqueado"
-          :aria-busy="cargando"
+          block
+          :loading="cargando"
+          :disabled="botonBloqueado"
+          :icon="iconoBoton"
         >
-          <span>{{ textoBoton }}</span>
-          <span
-            v-if="iconoBoton"
-            class="material-symbols-outlined"
-            :class="{ 'registro__girando': cargando }"
-            aria-hidden="true"
-          >{{ iconoBoton }}</span>
-        </button>
+          {{ textoBoton }}
+        </BaseButton>
       </form>
 
       <p class="registro__pie">
         {{ TEXTOS.pieTexto }}
         <RouterLink :to="{ name: 'login' }">{{ TEXTOS.pieEnlace }}</RouterLink>
       </p>
-    </section>
+    </BaseCard>
   </main>
 </template>
 
 <style scoped>
-/* Medidas tomadas del diseño (Stitch, escala Tailwind del proyecto):
-   tarjeta 760px, padding 32px, separación vertical 24px, campos 16px. */
+/* Solo lo propio del registro: composición de la pantalla, requisitos y casilla de términos.
+   Botones, campos, alertas y tarjeta vienen de '@/components/ui'. */
 .registro {
   display: flex;
   flex-direction: column;
@@ -567,227 +499,6 @@ async function enviar() {
 .registro__pie a {
   font-size: var(--cm-label-md);
   font-weight: 500;
-}
-
-.registro__girando {
-  animation: girar 1s linear infinite;
-}
-
-@keyframes girar {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* ---------- Avisos (Regla / conflicto / error) ---------- */
-.aviso {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--cm-esp-sm);
-  padding: var(--cm-esp-md);
-  border-radius: var(--cm-radio-lg);
-}
-
-.aviso__icono {
-  font-size: 20px;
-  margin-top: 2px;
-  flex-shrink: 0;
-}
-
-.aviso__cuerpo {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.aviso__titulo {
-  margin: 0;
-  font-size: var(--cm-label-md);
-  line-height: 16px;
-  font-weight: 700;
-}
-
-.aviso__texto {
-  margin: 0;
-  font-size: var(--cm-body-sm);
-  line-height: 16px;
-}
-
-.aviso--info {
-  background: var(--cm-info-fondo);
-  color: var(--cm-info-texto);
-}
-
-.aviso--info .aviso__titulo {
-  font-weight: 600;
-}
-
-.aviso--error {
-  background: var(--cm-error-fondo);
-  border: 1px solid var(--cm-error-borde);
-  color: var(--cm-error);
-}
-
-.aviso--error .aviso__icono {
-  font-size: 22px;
-}
-
-.aviso__acciones {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--cm-esp-sm);
-  margin-top: var(--cm-esp-sm);
-}
-
-.aviso__boton {
-  display: inline-block;
-  padding: var(--cm-esp-xs) var(--cm-esp-sm);
-  border-radius: var(--cm-radio);
-  font-size: var(--cm-label-sm);
-  line-height: 14px;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.aviso__boton:hover {
-  text-decoration: none;
-  filter: brightness(0.95);
-}
-
-.aviso__boton--primario {
-  background: var(--cm-primario);
-  color: #ffffff;
-}
-
-.aviso__boton--secundario {
-  background: var(--cm-secundario-fondo);
-  color: var(--cm-texto);
-}
-
-/* ---------- Campos ---------- */
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: var(--cm-esp-xs);
-}
-
-.campo__etiqueta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--cm-esp-sm);
-  font-size: var(--cm-label-md);
-  line-height: 16px;
-  font-weight: 500;
-  color: var(--cm-texto);
-}
-
-.campo__etiqueta-estado {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--cm-label-sm);
-  line-height: 14px;
-  font-weight: 600;
-}
-
-.campo__etiqueta-estado .material-symbols-outlined {
-  font-size: 14px;
-}
-
-.campo__control {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.campo__icono,
-.campo__icono-derecha {
-  position: absolute;
-  font-size: 20px;
-  color: var(--cm-texto-suave);
-  pointer-events: none;
-}
-
-.campo__icono {
-  left: 12px;
-}
-
-.campo__icono-derecha {
-  right: 12px;
-  font-size: 18px;
-}
-
-.campo__input {
-  width: 100%;
-  padding: var(--cm-esp-sm) var(--cm-esp-md) var(--cm-esp-sm) 40px;
-  border: 1px solid transparent;
-  border-radius: var(--cm-radio);
-  background: var(--cm-campo);
-  color: var(--cm-texto);
-  font-family: inherit;
-  font-size: var(--cm-body-md);
-  line-height: 20px;
-  outline: none;
-}
-
-.campo__input--icono-derecha {
-  padding-right: 40px;
-}
-
-.campo__input::placeholder {
-  color: var(--cm-texto-suave);
-  opacity: 0.7;
-}
-
-.campo__input:focus {
-  border-color: var(--cm-primario);
-}
-
-.campo__input:disabled {
-  opacity: 0.6;
-}
-
-.campo__error {
-  display: flex;
-  align-items: flex-start;
-  gap: 4px;
-  margin: 0;
-  font-size: var(--cm-body-sm);
-  line-height: 16px;
-  color: var(--cm-error);
-}
-
-.campo__error .material-symbols-outlined {
-  font-size: 14px;
-  margin-top: 1px;
-}
-
-/* Estado de error (diseño): etiqueta roja en negrita, borde e iconos rojos */
-.campo--error .campo__etiqueta {
-  color: var(--cm-error);
-  font-weight: 700;
-}
-
-.campo--error .campo__input {
-  border-color: var(--cm-error-borde);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.campo--error .campo__icono,
-.campo--error .campo__icono-derecha {
-  color: var(--cm-error);
-}
-
-/* Contraseña válida (diseño): borde, icono y etiqueta en azul */
-.campo--valido .campo__etiqueta-estado,
-.campo--valido .campo__icono,
-.campo--valido .campo__icono-derecha {
-  color: var(--cm-primario);
-}
-
-.campo--valido .campo__input {
-  border-color: var(--cm-primario);
 }
 
 /* ---------- Requisitos de seguridad ---------- */
@@ -872,7 +583,7 @@ async function enviar() {
   font-weight: 400;
 }
 
-.campo--check.campo--error .check label {
+.check__etiqueta--error {
   color: var(--cm-error);
 }
 </style>

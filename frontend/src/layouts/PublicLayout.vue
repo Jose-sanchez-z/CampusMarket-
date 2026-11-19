@@ -2,6 +2,7 @@
 <script setup>
 import { RouterLink, useRouter } from 'vue-router'
 import { useAuth } from '@/stores/auth'
+import { BaseButton } from '@/components/ui'
 
 const router = useRouter()
 const { estaAutenticado, cerrarSesion } = useAuth()
@@ -30,8 +31,8 @@ function salir() {
 
       <div class="acciones">
         <span class="insignia">Red Universitaria Activa</span>
-        <button v-if="estaAutenticado" type="button" class="boton" @click="salir">Cerrar sesión</button>
-        <RouterLink v-else :to="{ name: 'login' }" class="boton">Iniciar sesión</RouterLink>
+        <BaseButton v-if="estaAutenticado" size="sm" @click="salir">Cerrar sesión</BaseButton>
+        <BaseButton v-else size="sm" :to="{ name: 'login' }">Iniciar sesión</BaseButton>
       </div>
     </header>
 
@@ -43,37 +44,27 @@ function salir() {
 
 <style scoped>
 .layout-publico {
-  --primario: #0050cf;
-  --superficie: #ffffff;
-  --suave: #e8e8fb;
-  --borde: #dcdcf0;
-  --texto: #1b1b3a;
-  --texto-suave: #5b5b7a;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f8f7ff;
-  color: var(--texto);
+  background: var(--cm-fondo);
+  color: var(--cm-texto);
 }
 .cabecera {
-  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-  padding: 0.75rem 1.5rem; background: var(--superficie); border-bottom: 1px solid var(--borde);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--cm-esp-md);
+  padding: 0.75rem var(--cm-esp-lg); background: var(--cm-superficie); border-bottom: 1px solid var(--cm-borde);
 }
-.marca { display: flex; align-items: center; gap: 0.5rem; font-weight: 700; color: var(--texto); text-decoration: none; }
-.navegacion { display: flex; gap: 1.25rem; font-size: 0.85rem; }
-.navegacion a { color: var(--primario); text-decoration: none; }
+.marca { display: flex; align-items: center; gap: var(--cm-esp-sm); font-weight: 700; color: var(--cm-texto); text-decoration: none; }
+.navegacion { display: flex; gap: 1.25rem; font-size: var(--cm-body-md); }
+.navegacion a { color: var(--cm-primario); text-decoration: none; }
 .acciones { display: flex; align-items: center; gap: 0.75rem; }
-.insignia { font-size: 0.75rem; padding: 0.3rem 0.6rem; border-radius: 6px; background: var(--suave); color: var(--texto-suave); }
-.boton {
-  padding: 0.55rem 1rem; border: 0; border-radius: 8px; background: var(--primario); color: #fff;
-  font: inherit; font-weight: 600; cursor: pointer; text-decoration: none;
-}
-.contenido { flex: 1; width: 100%; max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+.insignia { font-size: var(--cm-body-sm); padding: 0.3rem 0.6rem; border-radius: var(--cm-radio-lg); background: var(--cm-secundario-fondo); color: var(--cm-texto-suave); }
+.contenido { flex: 1; width: 100%; max-width: 1100px; margin: 0 auto; padding: var(--cm-esp-xl) var(--cm-esp-lg); }
 
 /* Celular: se ocultan la navegación y la insignia */
 @media (max-width: 768px) {
   .navegacion, .insignia { display: none; }
-  .cabecera { padding: 0.75rem 1rem; }
-  .contenido { padding: 1.5rem 1rem; }
+  .cabecera { padding: 0.75rem var(--cm-esp-md); }
+  .contenido { padding: var(--cm-esp-lg) var(--cm-esp-md); }
 }
 </style>
