@@ -60,6 +60,7 @@ frontend/
 
 ## Reglas del Sprint 1
 
+- **Vista de celular (≤ 767 px):** registro y "¡Registro exitoso!" siguen `Diseno/boceto cel blanco.png` (P1.3 y Grupo 3). Para probarla: en Chrome presiona `F12` y luego `Ctrl + Shift + M`, y elige un teléfono (por ejemplo iPhone 12 Pro). Para verla en tu propio celular (misma red WiFi): `npm run dev -- --host` y abre en el teléfono la dirección `Network` que muestra la terminal.
 - La pantalla de registro replica los mockups de `Diseno/` ("crear cuenta pantalla compu.png" y "error al crear cuenta.png"). Los textos están juntos en la constante `TEXTOS` de `RegistroView.vue`.
 - La tipografía Inter y los iconos Material Symbols se cargan desde Google Fonts (`index.html`), igual que en el diseño: se necesita internet para verlos.
 - La interfaz usa siempre el **modo claro**. Los colores del modo oscuro quedan definidos en `base.css` bajo `:root[data-tema='oscuro']` por si más adelante se agrega un botón para cambiar de tema.

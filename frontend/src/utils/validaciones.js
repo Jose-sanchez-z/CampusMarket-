@@ -80,14 +80,18 @@ export function validarConfirmacion(password, confirmacion) {
   return ''
 }
 
-/** Valida todo el formulario y devuelve un objeto { campo: mensaje }. */
-export function validarRegistro(datos, { dominio, passwordMin = 8 } = {}) {
+/**
+ * Valida todo el formulario y devuelve un objeto { campo: mensaje }.
+ * `requiereTerminos` = false cuando la vista no muestra la casilla de términos
+ * (el mockup del celular no la incluye).
+ */
+export function validarRegistro(datos, { dominio, passwordMin = 8, requiereTerminos = true } = {}) {
   return {
     nombre: validarNombre(datos.nombre),
     correo: validarCorreo(datos.correo, dominio),
     password: validarPassword(datos.password, passwordMin),
     confirmacion: validarConfirmacion(datos.password, datos.confirmacion),
-    terminos: datos.terminos ? '' : 'Debes aceptar los términos de uso para continuar.'
+    terminos: !requiereTerminos || datos.terminos ? '' : 'Debes aceptar los términos de uso para continuar.'
   }
 }
 

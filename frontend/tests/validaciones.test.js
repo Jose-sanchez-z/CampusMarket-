@@ -121,3 +121,17 @@ test('formulario sin aceptar términos es inválido', () => {
   assert.equal(formularioValido(errores), false)
   assert.notEqual(errores.terminos, '')
 })
+
+test('en celular (sin casilla de términos) el formulario es válido sin aceptarlos', () => {
+  const errores = validarRegistro(
+    {
+      nombre: 'Nicoll Arias',
+      correo: 'narias@gmail.com',
+      password: 'Campus@2026',
+      confirmacion: 'Campus@2026',
+      terminos: false
+    },
+    { dominio: '', passwordMin: 8, requiereTerminos: false }
+  )
+  assert.ok(formularioValido(errores))
+})
