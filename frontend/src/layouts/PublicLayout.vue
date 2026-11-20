@@ -1,25 +1,42 @@
-<!-- S1-T05 · Layout con encabezado: logo, navegación y acceso -->
+<!-- S1-T05 · Layout con encabezado: logo, navegación y acceso (PC y celular) -->
 <script setup>
-import { RouterLink, useRouter } from 'vue-router'
+import { ref, watch } from 'vue'
+import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { useAuth } from '@/stores/auth'
 
+const route = useRoute()
 const router = useRouter()
 const { estaAutenticado, cerrarSesion } = useAuth()
 const logo = import.meta.env.BASE_URL + 'logo.png'
+const menuAbierto = ref(false)
 
-function salir() {
-  cerrarSesion()
+// Al cambiar de página en celular, el menú se cierra solo
+watch(() => route.fullPath, () => { menuAbierto.value = false })
+
+async function salir() {
+  menuAbierto.value = false
+ await cerrarSesion()
   router.push({ name: 'login' })
 }
 </script>
 
 <template>
   <div class="layout-publico">
-    <header class="cabecera">
+    <header class="cabecera" :class="{ 'menu-abierto': menuAbierto }">
       <RouterLink :to="{ name: 'inicio' }" class="marca">
         <img :src="logo" alt="" width="32" height="32" />
         <span>CampusMarket</span>
       </RouterLink>
+
+      <button
+        type="button"
+        class="hamburguesa"
+        aria-label="Menú"
+        :aria-expanded="menuAbierto"
+        @click="menuAbierto = !menuAbierto"
+      >
+        {{ menuAbierto ? '✕' : '☰' }}
+      </button>
 
       <nav class="navegacion" aria-label="Principal">
         <a href="#" @click.prevent>Explorar</a>
@@ -68,12 +85,21 @@ function salir() {
   padding: 0.55rem 1rem; border: 0; border-radius: 8px; background: var(--primario); color: #fff;
   font: inherit; font-weight: 600; cursor: pointer; text-decoration: none;
 }
+.hamburguesa {
+  display: none; width: 44px; height: 44px; border: 0; border-radius: 10px;
+  background: var(--suave); color: var(--texto); font-size: 1.25rem; cursor: pointer;
+}
 .contenido { flex: 1; width: 100%; max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
 
-/* Celular: se ocultan la navegación y la insignia */
+/* Celular: la navegación y el acceso se esconden detrás del botón ☰ */
 @media (max-width: 768px) {
-  .navegacion, .insignia { display: none; }
-  .cabecera { padding: 0.75rem 1rem; }
+  .cabecera { flex-wrap: wrap; padding: 0.75rem 1rem; }
+  .hamburguesa { display: inline-flex; align-items: center; justify-content: center; }
+  .navegacion, .acciones { display: none; width: 100%; }
+  .insignia { display: none; }
+  .menu-abierto .navegacion { display: flex; flex-direction: column; gap: 1rem; padding-top: 0.75rem; }
+  .menu-abierto .acciones { display: flex; padding-top: 0.75rem; }
+  .boton { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; width: 100%; }
   .contenido { padding: 1.5rem 1rem; }
 }
 </style>
