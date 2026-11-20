@@ -52,12 +52,12 @@ Contraseñas: estudiantes `Campus123*`, admin `Admin123*`.
 
 | Correo | Estado | Para probar |
 |---|---|---|
-| admin@campus.edu.co | ACTIVA / ADMIN | rol admin, sesión válida |
-| activa1@campus.edu.co | ACTIVA | login OK, token ya usado, token de recuperación vigente |
-| activa2@campus.edu.co | ACTIVA | sesión vencida y sesión revocada |
-| pendiente1@campus.edu.co | PENDIENTE | verificar con token `111111` (vigente) |
-| pendiente2@campus.edu.co | PENDIENTE | token `222222` con 4 intentos fallidos (límite) |
-| vencido@campus.edu.co | PENDIENTE | token `333333` vencido (CA-02-02) |
+| admin@gmail.com | ACTIVA / ADMIN | rol admin, sesión válida |
+| activa1@gmail.com | ACTIVA | login OK, token ya usado, token de recuperación vigente |
+| activa2@gmail.com | ACTIVA | sesión vencida y sesión revocada |
+| pendiente1@gmail.com | PENDIENTE | verificar con token `111111` (vigente) |
+| pendiente2@gmail.com | PENDIENTE | token `222222` con 4 intentos fallidos (límite) |
+| vencido@gmail.com | PENDIENTE | token `333333` vencido (CA-02-02) |
 
 `token_hash` en las semillas es SHA-256 hex del código de 6 dígitos.
 
