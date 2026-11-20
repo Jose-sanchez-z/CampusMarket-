@@ -8,14 +8,26 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Map;
 
-/** Limitado a RegistroController para no interferir con los errores de E08. */
-@RestControllerAdvice(assignableTypes = RegistroController.class)
+/** Limitado a los controladores de registro y verificación para no interferir con los errores de E08. */
+@RestControllerAdvice(assignableTypes = {RegistroController.class, VerificacionController.class})
 public class RegistroExceptionHandler {
 
     // 409: correo duplicado (CA-01-02)
     @ExceptionHandler(CorreoDuplicadoException.class)
     public ResponseEntity<Map<String, String>> duplicado(CorreoDuplicadoException e) {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("mensaje", e.getMessage()));
+    }
+
+    // 422: token inválido, vencido o usado (CA-02-02)
+    @ExceptionHandler(TokenInvalidoException.class)
+    public ResponseEntity<Map<String, String>> tokenInvalido(TokenInvalidoException e) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT).body(Map.of("mensaje", e.getMessage()));
+    }
+
+    // 429: exceso de intentos o reenvíos
+    @ExceptionHandler(DemasiadosIntentosException.class)
+    public ResponseEntity<Map<String, String>> demasiados(DemasiadosIntentosException e) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of("mensaje", e.getMessage()));
     }
 
     // 400: campos inválidos

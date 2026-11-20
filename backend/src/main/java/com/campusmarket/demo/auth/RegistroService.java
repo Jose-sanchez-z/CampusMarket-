@@ -78,7 +78,7 @@ public class RegistroService {
     }
 
     /** Código numérico de 6 dígitos (como en el contrato: "123456"). */
-    private static String generarToken() {
+     static String generarToken() {
         return String.format("%06d", RANDOM.nextInt(1_000_000));
     }
 
