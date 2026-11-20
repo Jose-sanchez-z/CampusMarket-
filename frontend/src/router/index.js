@@ -66,8 +66,9 @@ const router = createRouter({
 })
 
 // S1-T05: protección de rutas según el estado de autenticación.
-router.beforeEach((to) => {
-  const { estaAutenticado } = useAuth()
+router.beforeEach(async (to) => {
+  const { estaAutenticado, restaurarSesion } = useAuth()
+  await restaurarSesion() // pregunta al backend solo la primera vez
   // Ruta privada sin sesión: se envía al login.
   if (!to.meta.publica && !estaAutenticado.value) return { name: 'login' }
   // Con sesión iniciada no tiene sentido ver registro ni login.
