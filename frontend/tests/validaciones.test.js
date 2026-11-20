@@ -11,7 +11,10 @@ import {
   validarConfirmacion,
   validarRegistro,
   formularioValido,
-  reglasPassword
+  reglasPassword,
+  NOMBRE_MAX,
+  CORREO_MAX,
+  PASSWORD_MAX
 } from '../src/utils/validaciones.js'
 
 const DOMINIO = 'unipamplona.edu.co'
@@ -120,4 +123,28 @@ test('formulario sin aceptar términos es inválido', () => {
   )
   assert.equal(formularioValido(errores), false)
   assert.notEqual(errores.terminos, '')
+})
+
+test('en celular (sin casilla de términos) el formulario es válido sin aceptarlos', () => {
+  const errores = validarRegistro(
+    {
+      nombre: 'Nicoll Arias',
+      correo: 'narias@gmail.com',
+      password: 'Campus@2026',
+      confirmacion: 'Campus@2026',
+      terminos: false
+    },
+    { dominio: '', passwordMin: 8, requiereTerminos: false }
+  )
+  assert.ok(formularioValido(errores))
+})
+
+test('los límites coinciden con el backend (nombre 100, correo 150, contraseña 72)', () => {
+  assert.equal(NOMBRE_MAX, 100)
+  assert.equal(CORREO_MAX, 150)
+  assert.equal(PASSWORD_MAX, 72)
+  assert.notEqual(validarNombre('a'.repeat(101)), '')
+  assert.notEqual(validarCorreo('a'.repeat(141) + '@gmail.com', ''), '')
+  assert.equal(validarPassword('Aa1!' + 'x'.repeat(68), 8), '')
+  assert.match(validarPassword('Aa1!' + 'x'.repeat(69), 8), /72/)
 })
