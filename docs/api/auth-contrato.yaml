@@ -1,0 +1,192 @@
+openapi: 3.0.3
+info:
+  title: CampusMarket - Contrato de autenticación (Sprint 1)
+  version: 1.0.0
+  description: |
+    Endpoints de identidad y sesión del Sprint 1 (HU-01, HU-02, HU-03).
+    - Registro, verificación y reenvío: E07 (S1-T09, S1-T10).
+    - Login, logout y consulta de sesión: E08 (S1-T11).
+
+    **Sesión:** viaja en una cookie HttpOnly llamada `CM_SESION` emitida por el servidor.
+    El frontend NO la lee ni guarda tokens en localStorage/sessionStorage.
+    Toda petición debe enviarse con credenciales (`credentials: 'include'` en fetch
+    o `withCredentials: true` en Axios).
+
+    **CORS:** el backend permite el origen del frontend (por defecto http://localhost:5173)
+    con credenciales.
+
+    **Formato de error:** `{ "mensaje": "texto" }`. Los errores de validación de campos (400)
+    los genera Spring y su cuerpo puede traer más detalles.
+servers:
+  - url: http://localhost:8080
+    description: Entorno local
+tags:
+  - name: Registro y verificación
+  - name: Sesión
+paths:
+  /auth/registro:
+    post:
+      tags: [Registro y verificación]
+      summary: Solicitar registro (HU-01)
+      description: Crea la cuenta en estado PENDIENTE y envía el código por correo. No inicia sesión.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre, correo, password]
+              properties:
+                nombre: { type: string, example: Ana }
+                correo: { type: string, example: ana@uni.edu }
+                password: { type: string, example: Clave123! }
+      responses:
+        '202':
+          description: Cuenta creada (PENDIENTE). No se inicia sesión.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Mensaje' }
+              example: { mensaje: Código enviado }
+        '400': { description: Datos inválidos, content: { application/json: { schema: { $ref: '#/components/schemas/Mensaje' } } } }
+        '409': { description: Correo ya registrado, content: { application/json: { schema: { $ref: '#/components/schemas/Mensaje' } } } }
+  /auth/verificar:
+    post:
+      tags: [Registro y verificación]
+      summary: Verificar cuenta con token (HU-02)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [correo, token]
+              properties:
+                correo: { type: string, example: ana@uni.edu }
+                token: { type: string, example: '123456' }
+      responses:
+        '200':
+          description: Cuenta ACTIVA; el token queda inutilizado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Mensaje' }
+              example: { mensaje: Cuenta activada }
+        '400': { description: Token vencido o usado, content: { application/json: { schema: { $ref: '#/components/schemas/Mensaje' } } } }
+        '422': { description: Token vencido o usado, content: { application/json: { schema: { $ref: '#/components/schemas/Mensaje' } } } }
+  /auth/reenviartoken:
+    post:
+      tags: [Registro y verificación]
+      summary: Reenviar código de verificación (HU-02)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [correo]
+              properties:
+                correo: { type: string, example: ana@uni.edu }
+      responses:
+        '200':
+          description: Se invalidó el token anterior y se envió uno nuevo.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Mensaje' }
+              example: { mensaje: Nuevo código enviado }
+        '429': { description: Exceso de intentos o de reenvíos, content: { application/json: { schema: { $ref: '#/components/schemas/Mensaje' } } } }
+  /auth/login:
+    post:
+      tags: [Sesión]
+      summary: Iniciar sesión (HU-03)
+      description: Solo cuentas ACTIVAS. Si es correcto, responde con la cookie `CM_SESION` (HttpOnly).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [correo, password]
+              properties:
+                correo: { type: string, example: activa@uni.edu }
+                password: { type: string, example: Clave123! }
+      responses:
+        '200':
+          description: Sesión creada. Incluye cabecera Set-Cookie con CM_SESION (HttpOnly, SameSite=Lax, Path=/, duración 24 h por defecto; Secure configurable).
+          headers:
+            Set-Cookie:
+              schema: { type: string, example: 'CM_SESION=<token>; Path=/; HttpOnly; SameSite=Lax' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LoginResponse' }
+        '400': { description: Faltan campos (correo o password vacíos) }
+        '401':
+          description: Credenciales incorrectas (no revela si el correo existe).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Mensaje' }
+              example: { mensaje: Credenciales incorrectas }
+        '403':
+          description: Cuenta PENDIENTE (aún no verificada). Se ofrece ir a verificar.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Mensaje' }
+              example: { mensaje: Cuenta pendiente de verificación }
+  /auth/yo:
+    get:
+      tags: [Sesión]
+      summary: Consultar la sesión actual
+      description: Úsalo al cargar o recargar la página para saber si hay sesión activa y qué rol tiene.
+      security: [{ cookieSesion: [] }]
+      responses:
+        '200':
+          description: Usuario de la sesión.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/YoResponse' }
+        '401':
+          description: Sin sesión, sesión vencida o revocada.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Mensaje' }
+              example: { mensaje: No autenticado }
+  /auth/logout:
+    post:
+      tags: [Sesión]
+      summary: Cerrar sesión (HU-03)
+      description: Revoca la sesión en el servidor y limpia la cookie.
+      security: [{ cookieSesion: [] }]
+      responses:
+        '200':
+          description: Sesión revocada. Set-Cookie con Max-Age=0.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Mensaje' }
+              example: { mensaje: Sesión cerrada }
+        '401':
+          description: No autenticado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Mensaje' }
+components:
+  securitySchemes:
+    cookieSesion:
+      type: apiKey
+      in: cookie
+      name: CM_SESION
+  schemas:
+    Mensaje:
+      type: object
+      properties:
+        mensaje: { type: string }
+    LoginResponse:
+      type: object
+      properties:
+        id: { type: integer, example: 1 }
+        nombre: { type: string, example: Ana Activa }
+        rol: { type: string, enum: [ESTUDIANTE, ADMIN] }
+    YoResponse:
+      type: object
+      properties:
+        id: { type: integer, example: 1 }
+        nombre: { type: string, example: Ana Activa }
+        correo: { type: string, example: activa@uni.edu }
+        rol: { type: string, enum: [ESTUDIANTE, ADMIN] }
