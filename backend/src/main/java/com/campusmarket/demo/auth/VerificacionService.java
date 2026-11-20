@@ -21,6 +21,10 @@ public class VerificacionService {
     private static final int MAX_REENVIOS_CORREO = 3;
     private static final int MAX_REENVIOS_IP = 10;
 
+    // Debe coincidir EXACTAMENTE con el valor que acepta la restricción CHECK de la BD (migración de E09)
+    private static final String ESTADO_ACTIVA = "ACTIVA";
+    private static final String ESTADO_PENDIENTE = "PENDIENTE";
+
     private final UsuarioRepository usuarios;
     private final TokenVerificacionRepository tokens;
     private final EmailService email;
@@ -53,11 +57,12 @@ public class VerificacionService {
 
         Usuario u = usuarios.findByCorreo(correo).orElse(null);
         TokenVerificacion t = (u == null) ? null
-                : tokens.findFirstByUsuarioIdOrderByIdDesc(u.getId()).orElse(null);
+                : tokens.findFirstByUsuarioIdAndTipoOrderByIdDesc(
+                        u.getId(), TokenVerificacion.TIPO_VERIFICACION).orElse(null);
 
         boolean ok = t != null
                 && !t.isUsado()
-                && t.getVenceEn().isAfter(Instant.now())
+                && t.getFechaVencimiento().isAfter(Instant.now())
                 && MessageDigest.isEqual(
                         RegistroService.hash(token).getBytes(StandardCharsets.UTF_8),
                         t.getTokenHash().getBytes(StandardCharsets.UTF_8));
@@ -69,8 +74,8 @@ public class VerificacionService {
             throw new TokenInvalidoException();
         }
 
-        t.setUsado(true);
-        u.setEstado("ACTIVA");
+        t.marcarUsado(); // usado = true y fecha_uso = ahora
+        u.setEstado(ESTADO_ACTIVA);
         tokens.save(t);
         usuarios.save(u);
         limiter.limpiar(claveCorreo);
@@ -91,12 +96,13 @@ public class VerificacionService {
         limiter.registrar(claveIp);
 
         Usuario u = usuarios.findByCorreo(correo).orElse(null);
-        if (u == null || !"PENDIENTE".equals(u.getEstado())) {
+        if (u == null || !ESTADO_PENDIENTE.equals(u.getEstado())) {
             return; // no se revela si el correo existe o ya está activo
         }
 
-        for (TokenVerificacion previo : tokens.findByUsuarioIdAndUsadoFalse(u.getId())) {
-            previo.setUsado(true);
+        for (TokenVerificacion previo : tokens.findByUsuarioIdAndTipoAndUsadoFalse(
+                u.getId(), TokenVerificacion.TIPO_VERIFICACION)) {
+            previo.marcarUsado(); // la BD exige usado <=> fecha_uso
             tokens.save(previo);
         }
 

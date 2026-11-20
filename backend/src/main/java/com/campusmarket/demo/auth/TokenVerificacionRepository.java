@@ -11,6 +11,11 @@ public interface TokenVerificacionRepository extends JpaRepository<TokenVerifica
 
     // Con bloqueo para que dos verificaciones simultáneas no usen el mismo token
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<TokenVerificacion> findFirstByUsuarioIdAndTipoOrderByIdDesc(Long usuarioId, String tipo);
+
+    List<TokenVerificacion> findByUsuarioIdAndTipoAndUsadoFalse(Long usuarioId, String tipo);
+
+    // Se conservan para no romper las pruebas existentes
     Optional<TokenVerificacion> findFirstByUsuarioIdOrderByIdDesc(Long usuarioId);
 
     List<TokenVerificacion> findByUsuarioIdAndUsadoFalse(Long usuarioId);

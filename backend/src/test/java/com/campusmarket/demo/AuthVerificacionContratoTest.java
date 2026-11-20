@@ -22,7 +22,6 @@ import java.time.temporal.ChronoUnit;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
-
 /** Pruebas de CA-02-01, CA-02-02 y de los límites de intentos/reenvío (S1-T10, E07). */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -44,7 +43,7 @@ class AuthVerificacionContratoTest {
         u.setRol("ESTUDIANTE");
         u = usuarios.saveAndFlush(u);
         TokenVerificacion t = new TokenVerificacion(u.getId(), RegistroService.hash(codigo), vence);
-        t.setUsado(usado);
+        if (usado) t.marcarUsado();
         tokens.saveAndFlush(t);
         return u;
     }
