@@ -22,11 +22,23 @@ const routes = [
     meta: { publica: true, soloInvitado: true, titulo: 'Crear cuenta' },
   },
   {
-    // Pantalla de ingreso del token: se completa en S1-T04 (E04).
+    // "¡Registro exitoso!" (S1-T03): se muestra solo al venir del registro.
+    // Si se entra sin ?registro=ok, se pasa directo a la pantalla del código.
     path: '/verificacion',
     name: 'verificacion',
     component: () => import('@/views/VerificacionView.vue'),
     meta: { publica: true, titulo: 'Verificar cuenta' },
+    beforeEnter: (to) =>
+      to.query.registro === 'ok'
+        ? true
+        : { name: 'verificar-codigo', query: { correo: to.query.correo }, replace: true },
+  },
+  {
+    // Pantalla de ingreso del código de 6 dígitos (S1-T04, HU-02).
+    path: '/verificacion/codigo',
+    name: 'verificar-codigo',
+    component: () => import('@/views/CodigoVerificacionView.vue'),
+    meta: { publica: true, titulo: 'Verifica tu correo' },
   },
   {
     // Pantalla de login: la construye E05 en S1-T06.
