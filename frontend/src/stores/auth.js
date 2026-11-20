@@ -1,59 +1,64 @@
-// S1-T05 · Estado de autenticación (sin Pinia: solo Vue)
-// Estados posibles: sin sesión · pendiente de verificación · autenticado
+// S1-T05/T06 · Estado de autenticación (sin Pinia, sin localStorage).
+// La sesión vive en la cookie HttpOnly CM_SESION; aquí solo se guarda
+// en memoria el usuario que responde GET /auth/yo.
 import { reactive, computed } from 'vue'
-
-const CLAVE = 'campusmarket_sesion'
-
-// El almacenamiento del navegador puede fallar: siempre dentro de try/catch
-function leerSesion() {
-  try {
-    return JSON.parse(localStorage.getItem(CLAVE))
-  } catch {
-    return null
-  }
-}
-
-function guardarSesion(datos) {
-  try {
-    if (datos) localStorage.setItem(CLAVE, JSON.stringify(datos))
-    else localStorage.removeItem(CLAVE)
-  } catch {
-    /* sin almacenamiento: la sesión dura solo mientras la pestaña esté abierta */
-  }
-}
-
-const guardada = leerSesion()
+import { consultarSesion, iniciarSesionApi, cerrarSesionApi } from '@/services/sesionService'
 
 const estado = reactive({
-  token: guardada?.token ?? null,
-  usuario: guardada?.usuario ?? null,
-  correoPendiente: null, // correo que espera su código de verificación
+  usuario: null, // { id, nombre, correo?, rol }
+  correoPendiente: null, // correo de una cuenta que falta verificar
 })
 
-const estaAutenticado = computed(() => !!estado.token)
-const estaPendiente = computed(() => !estado.token && !!estado.correoPendiente)
+const estaAutenticado = computed(() => !!estado.usuario)
+const estaPendiente = computed(() => !estado.usuario && !!estado.correoPendiente)
 const usuario = computed(() => estado.usuario)
 
-// Se llama después de registrar la cuenta y antes de validar el código
+// Al cargar o recargar la página: ¿hay sesión? Se consulta una sola vez.
+let consulta = null
+function restaurarSesion() {
+  if (!consulta) {
+    consulta = consultarSesion()
+      .then(({ datos }) => {
+        estado.usuario = datos
+      })
+      .catch(() => {
+        estado.usuario = null // 401 = sin sesión (o sin conexión con el servidor)
+      })
+  }
+  return consulta
+}
+
+// Login: si el backend responde 200, ya hay cookie y se guarda el usuario.
+// Si falla, lanza el error (ApiError) para que la pantalla lo muestre.
+async function iniciarSesion({ correo, password }) {
+  const { datos } = await iniciarSesionApi({ correo, password })
+  estado.usuario = datos
+  estado.correoPendiente = null
+  return datos
+}
+
+async function cerrarSesion() {
+  try {
+    await cerrarSesionApi()
+  } catch {
+    /* si el servidor no responde, igual se limpia la vista */
+  }
+  estado.usuario = null
+  estado.correoPendiente = null
+}
+
 function marcarPendiente(correo) {
   estado.correoPendiente = correo
 }
 
-// Se llama cuando el backend devuelve el token (login o verificación correcta)
-function iniciarSesion({ token, usuario: datosUsuario }) {
-  estado.token = token
-  estado.usuario = datosUsuario ?? null
-  estado.correoPendiente = null
-  guardarSesion({ token, usuario: estado.usuario })
-}
-
-function cerrarSesion() {
-  estado.token = null
-  estado.usuario = null
-  estado.correoPendiente = null
-  guardarSesion(null)
-}
-
 export function useAuth() {
-  return { estaAutenticado, estaPendiente, usuario, marcarPendiente, iniciarSesion, cerrarSesion }
+  return {
+    estaAutenticado,
+    estaPendiente,
+    usuario,
+    restaurarSesion,
+    iniciarSesion,
+    cerrarSesion,
+    marcarPendiente,
+  }
 }
