@@ -7,10 +7,13 @@
 //   - Stitch "estados de error"          -> contraseñas no coinciden
 //   - "boceto cel blanco.png" (P1.3 y Grupo 3) -> vista de CELULAR (≤ 767 px)
 // Reglas:
-//  - CA-01-01: si la API responde 202 se redirige a /verificar SIN iniciar
+//  - CA-01-01: si la API responde 202 se redirige a /verificacion SIN iniciar
 //    sesión (no se guarda nada en localStorage/sessionStorage).
 //  - CA-01-02: si el correo ya existe (409) se muestra un mensaje claro y
 //    no se crea otra cuenta.
+// S1-T07: la vista usa los componentes de '@/components/ui' en lugar de
+// estilos propios; aquí solo queda el estilo específico del registro
+// (y los ajustes de la vista de celular).
 // =====================================================================
 import { computed, nextTick, reactive, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
@@ -24,6 +27,7 @@ import {
   NOMBRE_MAX,
   CORREO_MAX
 } from '@/utils/validaciones'
+import { BaseAlert, BaseButton, BaseCard, BaseInput, FormField } from '@/components/ui'
 import logo from '@/assets/img/logo-claro.png'
 import { useEsMovil } from '@/composables/useEsMovil'
 
@@ -116,6 +120,7 @@ const verPassword = ref(false) // ojo de la contraseña (solo en celular, como e
 const errorApi = ref(null)
 
 // Referencias a los campos para mover el foco al primer error.
+// (BaseInput expone focus(); la casilla es un <input> nativo.)
 const nombreRef = ref(null)
 const correoRef = ref(null)
 const passwordRef = ref(null)
@@ -160,14 +165,30 @@ const confirmacionCorrecta = computed(
   () => Boolean(form.confirmacion) && form.confirmacion === form.password && !validarRegistro(form, { passwordMin: PASSWORD_MIN, requiereTerminos: false }).password
 )
 
+// Iconos a la derecha de los campos (escritorio y celular según el mockup).
+const iconoCorreo = computed(() => (conflicto.value || (esMovil.value && errores.correo) ? (esMovil.value ? 'error' : 'cancel') : ''))
+const iconoNombre = computed(() => (esMovil.value && errores.nombre ? 'error' : ''))
+// Celular: ✓ verde en la contraseña cuando es válida pero la confirmación no coincide (MISMATCH PASS).
+const passwordConCheckMovil = computed(() => esMovil.value && noCoincide.value && passwordValida.value)
+const iconoPassword = computed(() => {
+  if (esMovil.value) return passwordConCheckMovil.value ? 'check' : ''
+  return passwordValida.value ? 'verified' : ''
+})
+const iconoConfirmacion = computed(() => {
+  if (noCoincide.value) return esMovil.value ? 'close' : 'error'
+  return esMovil.value && confirmacionCorrecta.value ? 'check_circle' : ''
+})
+const iconoError = computed(() => (esMovil.value ? 'warning' : 'close'))
+
 /** Botón "←" del celular: vuelve a la pantalla anterior o, si no hay, al login. */
 function volver() {
   if (window.history.state?.back) router.back()
   else router.push({ name: 'login' })
 }
 
+// Mientras carga, BaseButton dibuja su propio spinner.
 const iconoBoton = computed(() => {
-  if (cargando.value) return 'progress_activity'
+  if (esMovil.value) return ''
   if (conflicto.value) return ''
   if (botonBloqueado.value) return 'block'
   return 'arrow_forward'
@@ -210,10 +231,6 @@ function alEscribir(campo) {
     errorApi.value = null
   }
   if (tocados[campo] || enviado.value) revisarCampo(campo)
-}
-
-function idError(campo) {
-  return `error-${campo}`
 }
 
 async function enfocarPrimerError() {
@@ -304,7 +321,7 @@ async function enviar() {
 
 <template>
   <main class="cm-pagina-acceso" :class="{ 'registro-movil': esMovil }">
-    <section class="cm-tarjeta registro" :class="{ 'registro--cargando': cargando }" aria-labelledby="titulo-registro">
+    <BaseCard class="registro" :class="{ 'registro--cargando': cargando }" aria-labelledby="titulo-registro">
       <!-- Celular: botón volver + logo centrado (P1.3) -->
       <div v-if="esMovil" class="movil__barra">
         <button type="button" class="movil__volver" :aria-label="T.volver" @click="volver">
@@ -326,40 +343,26 @@ async function enviar() {
       <!-- ===== Avisos de escritorio ===== -->
       <template v-if="!esMovil">
         <!-- Conflicto 409: correo ya registrado (CA-01-02) -->
-        <div v-if="conflicto" class="aviso aviso--error" role="alert">
-          <span class="material-symbols-outlined aviso__icono" aria-hidden="true">warning</span>
-          <div class="aviso__cuerpo">
-            <p class="aviso__titulo">{{ T.conflictoTitulo }}</p>
-            <p class="aviso__texto">{{ errorApi.mensaje }}</p>
-            <div class="aviso__acciones">
-              <RouterLink :to="{ name: 'login', query: { correo: form.correo } }" class="aviso__boton aviso__boton--primario">
-                {{ T.conflictoIniciar }}
-              </RouterLink>
-              <!-- La recuperación de contraseña se construye en S2-T03; por ahora lleva al login. -->
-              <RouterLink :to="{ name: 'login', query: { correo: form.correo } }" class="aviso__boton aviso__boton--secundario">
-                {{ T.conflictoOlvido }}
-              </RouterLink>
-            </div>
-          </div>
-        </div>
+        <BaseAlert v-if="conflicto" tipo="error" icono="warning" :titulo="T.conflictoTitulo">
+          {{ errorApi.mensaje }}
+          <template #acciones>
+            <BaseButton size="xs" :to="{ name: 'login', query: { correo: form.correo } }">
+              {{ T.conflictoIniciar }}
+            </BaseButton>
+            <!-- La recuperación de contraseña se construye en S2-T03; por ahora lleva al login. -->
+            <BaseButton size="xs" variant="secondary" :to="{ name: 'login', query: { correo: form.correo } }">
+              {{ T.conflictoOlvido }}
+            </BaseButton>
+          </template>
+        </BaseAlert>
 
         <!-- Otros errores de la API (400, sin conexión, 429...) -->
-        <div v-else-if="errorApi" class="aviso aviso--error" role="alert">
-          <span class="material-symbols-outlined aviso__icono" aria-hidden="true">error</span>
-          <div class="aviso__cuerpo">
-            <p class="aviso__titulo">{{ T.errorTitulo }}</p>
-            <p class="aviso__texto">{{ errorApi.mensaje }}</p>
-          </div>
-        </div>
+        <BaseAlert v-else-if="errorApi" tipo="error" :titulo="T.errorTitulo">
+          {{ errorApi.mensaje }}
+        </BaseAlert>
 
         <!-- Regla del flujo (CA-01-01) -->
-        <div v-else class="aviso aviso--info">
-          <span class="material-symbols-outlined aviso__icono" aria-hidden="true">info</span>
-          <div class="aviso__cuerpo">
-            <p class="aviso__titulo">{{ T.reglaTitulo }}</p>
-            <p class="aviso__texto">{{ T.reglaTexto }}</p>
-          </div>
-        </div>
+        <BaseAlert v-else tipo="info" :titulo="T.reglaTitulo">{{ T.reglaTexto }}</BaseAlert>
       </template>
 
       <!-- Celular: errores de la API que no son del correo (sin conexión, 400, 429...) -->
@@ -371,106 +374,72 @@ async function enviar() {
       <form class="registro__form" novalidate @submit.prevent="enviar">
         <div class="registro__campos">
           <div class="registro__grid">
-            <!-- Nombre -->
-            <div class="campo" :class="{ 'campo--error': errores.nombre }">
-              <label for="nombre" class="campo__etiqueta">
-                <span>{{ T.nombre }}</span>
-              </label>
-              <div class="campo__control">
-                <span v-if="!esMovil" class="material-symbols-outlined campo__icono" aria-hidden="true">person</span>
-                <input
-                  id="nombre"
-                  ref="nombreRef"
-                  v-model="form.nombre"
-                  type="text"
-                  class="campo__input"
-                  autocomplete="name"
-                  :maxlength="NOMBRE_MAX"
-                  :placeholder="T.nombreEjemplo"
-                  :disabled="cargando"
-                  :aria-invalid="Boolean(errores.nombre)"
-                  :aria-describedby="errores.nombre ? idError('nombre') : undefined"
-                  @blur="alSalir('nombre')"
-                  @input="alEscribir('nombre')"
-                />
-                <span v-if="esMovil && errores.nombre" class="material-symbols-outlined campo__icono-derecha" aria-hidden="true">error</span>
-              </div>
-              <p v-if="errores.nombre" :id="idError('nombre')" class="campo__error">
-                <span class="material-symbols-outlined" aria-hidden="true">{{ esMovil ? 'warning' : 'close' }}</span>{{ errores.nombre }}
-              </p>
-            </div>
+            <FormField id="nombre" :label="T.nombre" :error="errores.nombre" :error-icono="iconoError">
+              <BaseInput
+                ref="nombreRef"
+                v-model="form.nombre"
+                :icon="esMovil ? '' : 'person'"
+                :icon-right="iconoNombre"
+                autocomplete="name"
+                :maxlength="NOMBRE_MAX"
+                :placeholder="T.nombreEjemplo"
+                :disabled="cargando"
+                @blur="alSalir('nombre')"
+                @input="alEscribir('nombre')"
+              />
+            </FormField>
 
-            <!-- Correo -->
-            <div class="campo" :class="{ 'campo--error': errores.correo }">
-              <label for="correo" class="campo__etiqueta">
-                <span>{{ T.correo }}</span>
-                <span v-if="conflicto && !esMovil" class="campo__etiqueta-estado">{{ T.conflictoEtiqueta }}</span>
-              </label>
-              <div class="campo__control">
-                <span v-if="!esMovil" class="material-symbols-outlined campo__icono" aria-hidden="true">mail</span>
-                <input
-                  id="correo"
-                  ref="correoRef"
-                  v-model="form.correo"
-                  type="email"
-                  class="campo__input"
-                  :class="{ 'campo__input--icono-derecha': conflicto || (esMovil && errores.correo) }"
-                  autocomplete="email"
-                  inputmode="email"
-                  :maxlength="CORREO_MAX"
-                  :placeholder="T.correoEjemplo"
-                  :disabled="cargando"
-                  :aria-invalid="Boolean(errores.correo)"
-                  :aria-describedby="errores.correo ? idError('correo') : undefined"
-                  @blur="alSalir('correo')"
-                  @input="alEscribir('correo')"
-                />
-                <span
-                  v-if="conflicto || (esMovil && errores.correo)"
-                  class="material-symbols-outlined campo__icono-derecha"
-                  aria-hidden="true"
-                >{{ esMovil ? 'error' : 'cancel' }}</span>
-              </div>
-              <p v-if="errores.correo" :id="idError('correo')" class="campo__error" :class="{ 'campo__error--sin-icono': conflicto }">
-                <span v-if="!conflicto" class="material-symbols-outlined" aria-hidden="true">{{ esMovil ? 'warning' : 'close' }}</span>{{ errores.correo }}
-              </p>
-            </div>
+            <FormField
+              id="correo"
+              :label="T.correo"
+              :error="errores.correo"
+              :error-icono="conflicto ? '' : iconoError"
+              :estado="conflicto && !esMovil ? T.conflictoEtiqueta : ''"
+            >
+              <BaseInput
+                ref="correoRef"
+                v-model="form.correo"
+                type="email"
+                :icon="esMovil ? '' : 'mail'"
+                :icon-right="iconoCorreo"
+                autocomplete="email"
+                inputmode="email"
+                :maxlength="CORREO_MAX"
+                :placeholder="T.correoEjemplo"
+                :disabled="cargando"
+                @blur="alSalir('correo')"
+                @input="alEscribir('correo')"
+              />
+            </FormField>
 
-            <!-- Contraseña -->
-            <div class="campo" :class="{ 'campo--error': errores.password, 'campo--valido': passwordValida && !esMovil }">
-              <label for="password" class="campo__etiqueta">
-                <span>{{ T.password }}</span>
-                <span v-if="passwordValida && !esMovil" class="campo__etiqueta-estado">
-                  <span class="material-symbols-outlined" aria-hidden="true">check_circle</span>
-                  {{ T.passwordValida }}
-                </span>
-              </label>
-              <div class="campo__control">
-                <span v-if="!esMovil" class="material-symbols-outlined campo__icono" aria-hidden="true">key</span>
-                <input
-                  id="password"
+            <FormField
+              id="password"
+              :label="T.password"
+              :error="errores.password"
+              :error-icono="iconoError"
+              :valid="passwordValida && !esMovil"
+              :estado="passwordValida && !esMovil ? T.passwordValida : ''"
+              :estado-icono="passwordValida && !esMovil ? 'check_circle' : ''"
+              ayuda-id="reglas-password"
+            >
+              <div class="control-con-ojo">
+                <BaseInput
                   ref="passwordRef"
                   v-model="form.password"
                   :type="esMovil && verPassword ? 'text' : 'password'"
-                  class="campo__input"
-                  :class="{ 'campo__input--icono-derecha': passwordValida || esMovil }"
+                  :icon="esMovil ? '' : 'key'"
+                  :icon-right="iconoPassword"
+                  :valid="passwordConCheckMovil"
+                  :class="{ 'entrada__input--con-ojo': esMovil && !passwordConCheckMovil }"
                   autocomplete="new-password"
                   placeholder="••••••••••••"
                   :disabled="cargando"
-                  :aria-invalid="Boolean(errores.password)"
-                  :aria-describedby="errores.password ? `reglas-password ${idError('password')}` : 'reglas-password'"
                   @blur="alSalir('password')"
                   @input="alEscribir('password')"
                 />
-                <!-- Celular: ✓ verde si la contraseña es válida pero la confirmación no coincide (mockup MISMATCH PASS) -->
-                <span
-                  v-if="esMovil && noCoincide && passwordValida"
-                  class="material-symbols-outlined campo__icono-derecha movil__icono-ok"
-                  aria-hidden="true"
-                >check</span>
                 <!-- Celular: ojo para ver/ocultar la contraseña (mockup P1.3) -->
                 <button
-                  v-else-if="esMovil"
+                  v-if="esMovil && !passwordConCheckMovil"
                   type="button"
                   class="campo__ojo"
                   :aria-label="verPassword ? T.ocultarPassword : T.verPassword"
@@ -480,53 +449,34 @@ async function enviar() {
                 >
                   <span class="material-symbols-outlined" aria-hidden="true">{{ verPassword ? 'visibility_off' : 'visibility' }}</span>
                 </button>
-                <span v-else-if="passwordValida" class="material-symbols-outlined campo__icono-derecha" aria-hidden="true">verified</span>
               </div>
-              <p v-if="errores.password" :id="idError('password')" class="campo__error">
-                <span class="material-symbols-outlined" aria-hidden="true">{{ esMovil ? 'warning' : 'close' }}</span>{{ errores.password }}
-              </p>
-            </div>
+            </FormField>
 
-            <!-- Confirmar contraseña -->
-            <div class="campo" :class="{ 'campo--error': errores.confirmacion }">
-              <label for="confirmacion" class="campo__etiqueta">
-                <span>{{ T.confirmacion }}</span>
-                <span v-if="noCoincide && !esMovil" class="campo__etiqueta-estado">
-                  <span class="material-symbols-outlined" aria-hidden="true">error</span>
-                  {{ T.noCoincide }}
-                </span>
-              </label>
-              <div class="campo__control">
-                <span v-if="!esMovil" class="material-symbols-outlined campo__icono" aria-hidden="true">lock_reset</span>
-                <input
-                  id="confirmacion"
-                  ref="confirmacionRef"
-                  v-model="form.confirmacion"
-                  :type="esMovil && verPassword ? 'text' : 'password'"
-                  class="campo__input"
-                  :class="{ 'campo__input--icono-derecha': noCoincide || (esMovil && confirmacionCorrecta) }"
-                  autocomplete="new-password"
-                  placeholder="••••••••••••"
-                  :disabled="cargando"
-                  :aria-invalid="Boolean(errores.confirmacion)"
-                  :aria-describedby="errores.confirmacion ? idError('confirmacion') : undefined"
-                  @blur="alSalir('confirmacion')"
-                  @input="alEscribir('confirmacion')"
-                />
-                <span v-if="noCoincide" class="material-symbols-outlined campo__icono-derecha" aria-hidden="true">{{ esMovil ? 'close' : 'error' }}</span>
-                <span
-                  v-else-if="esMovil && confirmacionCorrecta"
-                  class="material-symbols-outlined campo__icono-derecha movil__icono-ok"
-                  aria-hidden="true"
-                >check_circle</span>
-              </div>
-              <p v-if="errores.confirmacion" :id="idError('confirmacion')" class="campo__error">
-                <span class="material-symbols-outlined" aria-hidden="true">{{ esMovil ? 'warning' : 'close' }}</span>{{ errores.confirmacion }}
-              </p>
-            </div>
+            <FormField
+              id="confirmacion"
+              :label="T.confirmacion"
+              :error="errores.confirmacion"
+              :error-icono="iconoError"
+              :estado="noCoincide && !esMovil ? T.noCoincide : ''"
+              :estado-icono="noCoincide && !esMovil ? 'error' : ''"
+            >
+              <BaseInput
+                ref="confirmacionRef"
+                v-model="form.confirmacion"
+                :type="esMovil && verPassword ? 'text' : 'password'"
+                :icon="esMovil ? '' : 'lock_reset'"
+                :icon-right="iconoConfirmacion"
+                :valid="esMovil && confirmacionCorrecta && !noCoincide"
+                autocomplete="new-password"
+                placeholder="••••••••••••"
+                :disabled="cargando"
+                @blur="alSalir('confirmacion')"
+                @input="alEscribir('confirmacion')"
+              />
+            </FormField>
           </div>
 
-          <!-- Requisitos de seguridad en tiempo real -->
+          <!-- Requisitos de seguridad en tiempo real (específico de esta pantalla) -->
           <div id="reglas-password" class="requisitos">
             <p class="requisitos__titulo">{{ T.requisitos }}</p>
             <ul class="requisitos__lista">
@@ -543,8 +493,9 @@ async function enviar() {
             </ul>
           </div>
 
-          <!-- Términos (solo escritorio: el mockup del celular no tiene casilla) -->
-          <div v-if="!esMovil" class="campo campo--check" :class="{ 'campo--error': errores.terminos }">
+          <!-- Términos (solo escritorio: el mockup del celular no tiene casilla).
+               FormField sin etiqueta, solo para el mensaje de error y la accesibilidad. -->
+          <FormField v-if="!esMovil" id="terminos" :error="errores.terminos" v-slot="{ describedby, invalid }">
             <div class="check">
               <input
                 id="terminos"
@@ -552,41 +503,27 @@ async function enviar() {
                 v-model="form.terminos"
                 type="checkbox"
                 :disabled="cargando"
-                :aria-invalid="Boolean(errores.terminos)"
-                :aria-describedby="errores.terminos ? idError('terminos') : undefined"
+                :aria-invalid="invalid"
+                :aria-describedby="describedby"
                 @change="alSalir('terminos')"
               />
-              <label for="terminos">
+              <label for="terminos" :class="{ 'check__etiqueta--error': invalid }">
                 {{ T.terminosAntes }}<a href="#" @click.prevent>{{ T.terminosEnlace }}</a>{{ T.terminosDespues }}
               </label>
             </div>
-            <p v-if="errores.terminos" :id="idError('terminos')" class="campo__error">
-              <span class="material-symbols-outlined" aria-hidden="true">close</span>{{ errores.terminos }}
-            </p>
-          </div>
+          </FormField>
         </div>
 
         <div class="registro__acciones">
-          <button
+          <BaseButton
             type="submit"
-            class="cm-boton"
-            :class="{ 'cm-boton--cargando': cargando, 'cm-boton--conflicto-movil': esMovil && conflicto }"
-            :disabled="cargando || (botonBloqueado && !esMovil)"
-            :aria-busy="cargando"
+            block
+            :loading="cargando"
+            :disabled="botonBloqueado && !esMovil"
+            :icon="iconoBoton"
           >
-            <!-- Celular: spinner del mockup (BUSY_SIGNUP) -->
-            <svg v-if="esMovil && cargando" class="movil__spinner" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" opacity="0.25"></circle>
-              <path opacity="0.75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span>{{ textoBoton }}</span>
-            <span
-              v-if="iconoBoton && !esMovil"
-              class="material-symbols-outlined"
-              :class="{ 'registro__girando': cargando }"
-              aria-hidden="true"
-            >{{ iconoBoton }}</span>
-          </button>
+            {{ textoBoton }}
+          </BaseButton>
 
           <!-- Pie -->
           <p v-if="esMovil && conflicto" class="registro__pie">
@@ -598,13 +535,19 @@ async function enviar() {
           </p>
         </div>
       </form>
-    </section>
+    </BaseCard>
   </main>
 </template>
 
 <style scoped>
-/* Medidas tomadas del diseño (Stitch, escala Tailwind del proyecto):
-   tarjeta 760px, padding 32px, separación vertical 24px, campos 16px. */
+/* El layout de autenticación (S1-T05) centra el contenido sin darle ancho:
+   sin esto la tarjeta se encoge y no llega a su ancho del mockup. */
+.cm-pagina-acceso {
+  width: 100%;
+}
+
+/* Solo lo propio del registro: composición de la pantalla, requisitos y casilla de términos.
+   Botones, campos, alertas y tarjeta vienen de '@/components/ui'. */
 .registro {
   display: flex;
   flex-direction: column;
@@ -665,6 +608,17 @@ async function enviar() {
   gap: var(--cm-esp-lg);
 }
 
+/* Contenedor del campo de contraseña con el botón del ojo (celular) */
+.control-con-ojo {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.control-con-ojo > * {
+  flex: 1;
+}
+
 .registro__pie {
   margin: 0;
   text-align: center;
@@ -676,227 +630,6 @@ async function enviar() {
 .registro__pie a {
   font-size: var(--cm-label-md);
   font-weight: 500;
-}
-
-.registro__girando {
-  animation: girar 1s linear infinite;
-}
-
-@keyframes girar {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* ---------- Avisos (Regla / conflicto / error) ---------- */
-.aviso {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--cm-esp-sm);
-  padding: var(--cm-esp-md);
-  border-radius: var(--cm-radio-lg);
-}
-
-.aviso__icono {
-  font-size: 20px;
-  margin-top: 2px;
-  flex-shrink: 0;
-}
-
-.aviso__cuerpo {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.aviso__titulo {
-  margin: 0;
-  font-size: var(--cm-label-md);
-  line-height: 16px;
-  font-weight: 700;
-}
-
-.aviso__texto {
-  margin: 0;
-  font-size: var(--cm-body-sm);
-  line-height: 16px;
-}
-
-.aviso--info {
-  background: var(--cm-info-fondo);
-  color: var(--cm-info-texto);
-}
-
-.aviso--info .aviso__titulo {
-  font-weight: 600;
-}
-
-.aviso--error {
-  background: var(--cm-error-fondo);
-  border: 1px solid var(--cm-error-borde);
-  color: var(--cm-error);
-}
-
-.aviso--error .aviso__icono {
-  font-size: 22px;
-}
-
-.aviso__acciones {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--cm-esp-sm);
-  margin-top: var(--cm-esp-sm);
-}
-
-.aviso__boton {
-  display: inline-block;
-  padding: var(--cm-esp-xs) var(--cm-esp-sm);
-  border-radius: var(--cm-radio);
-  font-size: var(--cm-label-sm);
-  line-height: 14px;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.aviso__boton:hover {
-  text-decoration: none;
-  filter: brightness(0.95);
-}
-
-.aviso__boton--primario {
-  background: var(--cm-primario);
-  color: #ffffff;
-}
-
-.aviso__boton--secundario {
-  background: var(--cm-secundario-fondo);
-  color: var(--cm-texto);
-}
-
-/* ---------- Campos ---------- */
-.campo {
-  display: flex;
-  flex-direction: column;
-  gap: var(--cm-esp-xs);
-}
-
-.campo__etiqueta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--cm-esp-sm);
-  font-size: var(--cm-label-md);
-  line-height: 16px;
-  font-weight: 500;
-  color: var(--cm-texto);
-}
-
-.campo__etiqueta-estado {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--cm-label-sm);
-  line-height: 14px;
-  font-weight: 600;
-}
-
-.campo__etiqueta-estado .material-symbols-outlined {
-  font-size: 14px;
-}
-
-.campo__control {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.campo__icono,
-.campo__icono-derecha {
-  position: absolute;
-  font-size: 20px;
-  color: var(--cm-texto-suave);
-  pointer-events: none;
-}
-
-.campo__icono {
-  left: 12px;
-}
-
-.campo__icono-derecha {
-  right: 12px;
-  font-size: 18px;
-}
-
-.campo__input {
-  width: 100%;
-  padding: var(--cm-esp-sm) var(--cm-esp-md) var(--cm-esp-sm) 40px;
-  border: 1px solid transparent;
-  border-radius: var(--cm-radio);
-  background: var(--cm-campo);
-  color: var(--cm-texto);
-  font-family: inherit;
-  font-size: var(--cm-body-md);
-  line-height: 20px;
-  outline: none;
-}
-
-.campo__input--icono-derecha {
-  padding-right: 40px;
-}
-
-.campo__input::placeholder {
-  color: var(--cm-texto-suave);
-  opacity: 0.7;
-}
-
-.campo__input:focus {
-  border-color: var(--cm-primario);
-}
-
-.campo__input:disabled {
-  opacity: 0.6;
-}
-
-.campo__error {
-  display: flex;
-  align-items: flex-start;
-  gap: 4px;
-  margin: 0;
-  font-size: var(--cm-body-sm);
-  line-height: 16px;
-  color: var(--cm-error);
-}
-
-.campo__error .material-symbols-outlined {
-  font-size: 14px;
-  margin-top: 1px;
-}
-
-/* Estado de error (diseño): etiqueta roja en negrita, borde e iconos rojos */
-.campo--error .campo__etiqueta {
-  color: var(--cm-error);
-  font-weight: 700;
-}
-
-.campo--error .campo__input {
-  border-color: var(--cm-error-borde);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.campo--error .campo__icono,
-.campo--error .campo__icono-derecha {
-  color: var(--cm-error);
-}
-
-/* Contraseña válida (diseño): borde, icono y etiqueta en azul */
-.campo--valido .campo__etiqueta-estado,
-.campo--valido .campo__icono,
-.campo--valido .campo__icono-derecha {
-  color: var(--cm-primario);
-}
-
-.campo--valido .campo__input {
-  border-color: var(--cm-primario);
 }
 
 /* ---------- Requisitos de seguridad ---------- */
@@ -981,14 +714,15 @@ async function enviar() {
   font-weight: 400;
 }
 
-.campo--check.campo--error .check label {
+.check__etiqueta--error {
   color: var(--cm-error);
 }
 
 /* =====================================================================
-   VISTA DE CELULAR (≤ 767 px) — "boceto cel blanco.png"
-   P1.3 Registro y Grupo 3 (cargando, correo duplicado, contraseñas
-   distintas). Colores Tailwind slate / red / emerald del mockup.
+   VISTA DE CELULAR (≤ 767 px) — "boceto cel blanco.png" (P1.3 y Grupo 3).
+   Usa los mismos componentes de '@/components/ui'; aquí solo se ajustan
+   las medidas y colores que el mockup del celular pide distintos
+   (slate / red / emerald de Tailwind).
    ===================================================================== */
 .registro-movil {
   align-items: stretch;
@@ -1081,15 +815,15 @@ async function enviar() {
   margin-top: 4px;
 }
 
-/* Campos */
-.registro-movil .campo__etiqueta {
+/* Campos (FormField + BaseInput) */
+.registro-movil :deep(.campo__etiqueta) {
   font-size: 11px;
   line-height: 14px;
   font-weight: 600;
   color: #334155;
 }
 
-.registro-movil .campo__input {
+.registro-movil :deep(.entrada__input) {
   height: 40px;
   padding: 0 12px;
   border: 1px solid #cbd5e1;
@@ -1100,32 +834,39 @@ async function enviar() {
   line-height: 16px;
 }
 
-.registro-movil .campo__input--icono-derecha {
+.registro-movil :deep(.entrada__input--derecha),
+.registro-movil :deep(.entrada__input--con-ojo) {
   padding-right: 40px;
 }
 
-.registro-movil .campo__input::placeholder {
+.registro-movil :deep(.entrada__input::placeholder) {
   color: #94a3b8;
   opacity: 1;
 }
 
-.registro-movil .campo__input:focus {
+.registro-movil :deep(.entrada__input:focus) {
   border-color: var(--cm-primario);
 }
 
-.registro-movil .campo__icono-derecha {
+.registro-movil :deep(.entrada__icono--derecha) {
   right: 12px;
   font-size: 18px;
   color: #94a3b8;
 }
 
-.movil__icono-ok {
-  color: #059669 !important;
+/* ✓ verde (contraseña válida / confirmación correcta) */
+.registro-movil :deep(.entrada--valido .entrada__input) {
+  border-color: #cbd5e1;
+}
+
+.registro-movil :deep(.entrada--valido .entrada__icono) {
+  color: #059669;
 }
 
 .campo__ojo {
   position: absolute;
   right: 8px;
+  flex: 0 0 auto !important;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1141,12 +882,12 @@ async function enviar() {
 }
 
 /* Error en celular: borde rojo de 2px, fondo blanco y recuadro con el mensaje */
-.registro-movil .campo--error .campo__etiqueta {
+.registro-movil :deep(.campo--error .campo__etiqueta) {
   color: #dc2626;
   font-weight: 600;
 }
 
-.registro-movil .campo--error .campo__input {
+.registro-movil :deep(.entrada--error .entrada__input) {
   border: 2px solid #ef4444;
   background: #ffffff;
   color: #dc2626;
@@ -1154,11 +895,11 @@ async function enviar() {
   box-shadow: none;
 }
 
-.registro-movil .campo--error .campo__icono-derecha {
+.registro-movil :deep(.entrada--error .entrada__icono) {
   color: #dc2626;
 }
 
-.registro-movil .campo__error,
+.registro-movil :deep(.campo__error),
 .movil__caja-error {
   display: flex;
   align-items: flex-start;
@@ -1172,7 +913,7 @@ async function enviar() {
   line-height: 1.25;
 }
 
-.registro-movil .campo__error .material-symbols-outlined,
+.registro-movil :deep(.campo__error .material-symbols-outlined),
 .movil__caja-error .material-symbols-outlined {
   font-size: 14px;
   margin-top: 0;
@@ -1221,7 +962,7 @@ async function enviar() {
   font-weight: 400;
 }
 
-/* Botón inferior y pie */
+/* Botón inferior (BaseButton) y pie */
 .registro-movil .registro__acciones {
   gap: 8px;
   padding-bottom: 8px;
@@ -1231,10 +972,8 @@ async function enviar() {
   height: 44px;
   padding: 0 16px;
   gap: 8px;
-  border-radius: 8px;
   font-size: 12px;
   line-height: 16px;
-  font-weight: 600;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
 }
 
@@ -1243,12 +982,6 @@ async function enviar() {
   color: #ffffff;
   opacity: 1;
   cursor: wait;
-}
-
-.movil__spinner {
-  width: 20px;
-  height: 20px;
-  animation: girar 1s linear infinite;
 }
 
 .registro-movil .registro__pie {
@@ -1263,14 +996,13 @@ async function enviar() {
 }
 
 /* Cargando (BUSY_SIGNUP): campos atenuados */
-.registro-movil.registro-movil .registro--cargando .registro__campos {
+.registro-movil .registro--cargando .registro__campos {
   opacity: 0.6;
 }
 
-.registro-movil .registro--cargando .campo__input:disabled {
+.registro-movil .registro--cargando :deep(.entrada__input:disabled) {
   background: #f1f5f9;
   opacity: 1;
   color: #1e293b;
 }
 </style>
-

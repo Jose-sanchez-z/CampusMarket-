@@ -5,9 +5,11 @@
 // (MODAL_CHECK_EMAIL). En escritorio se muestra la misma tarjeta centrada.
 // PENDIENTE S1-T04 (E04): campo del token -> POST /auth/verificar y botón
 // "Reenviar código" con bloqueo temporal -> POST /auth/reenviartoken.
+// S1-T07: tarjeta y botón con los componentes de '@/components/ui'.
 // =====================================================================
 import { computed } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
+import { BaseButton, BaseCard } from '@/components/ui'
 import logo from '@/assets/img/logo-claro.png'
 
 const TEXTOS = {
@@ -26,7 +28,7 @@ const vieneDeRegistro = computed(() => route.query.registro === 'ok')
 
 <template>
   <main class="cm-pagina-acceso verificacion-pagina">
-    <section class="verificacion" aria-labelledby="titulo-verificacion">
+    <BaseCard size="sm" class="verificacion" aria-labelledby="titulo-verificacion">
       <img :src="logo" alt="CampusMarket" class="verificacion__logo" width="128" height="128" />
 
       <div class="verificacion__tarjeta">
@@ -45,25 +47,33 @@ const vieneDeRegistro = computed(() => route.query.registro === 'ok')
 
       <div class="verificacion__acciones">
         <!-- S1-T04: este paso abrirá el formulario del código (POST /auth/verificar). -->
-        <RouterLink
+        <BaseButton
           v-if="vieneDeRegistro"
+          block
           :to="{ name: 'verificacion', query: { correo } }"
-          class="cm-boton verificacion__boton"
+          class="verificacion__boton"
         >
           {{ TEXTOS.boton }}
-        </RouterLink>
+        </BaseButton>
         <p v-else class="verificacion__pendiente">{{ TEXTOS.pendiente }}</p>
 
         <RouterLink :to="{ name: 'registro' }" class="verificacion__volver">{{ TEXTOS.volver }}</RouterLink>
       </div>
-    </section>
+    </BaseCard>
   </main>
 </template>
 
 <style scoped>
-/* Medidas del mockup móvil (Tailwind): logo 128px, tarjeta slate-50 con
+/* El layout de autenticación (S1-T05) centra el contenido sin darle ancho:
+   sin esto la tarjeta se encoge y no llega a su ancho del mockup. */
+.cm-pagina-acceso {
+  width: 100%;
+}
+
+/* (.verificacion.verificacion: gana sobre los estilos base de BaseCard)
+   Medidas del mockup móvil (Tailwind): logo 128px, tarjeta slate-50 con
    borde slate-200 y radio 16px, icono morado 64px, botón 44px. */
-.verificacion {
+.verificacion.verificacion {
   width: 100%;
   max-width: 420px;
   display: flex;
@@ -146,7 +156,7 @@ const vieneDeRegistro = computed(() => route.query.registro === 'ok')
   gap: 12px;
 }
 
-.verificacion__boton {
+.verificacion .verificacion__boton {
   height: 44px;
   padding: 0 16px;
   font-size: 12px;
@@ -155,7 +165,7 @@ const vieneDeRegistro = computed(() => route.query.registro === 'ok')
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
 }
 
-.verificacion__boton:hover {
+.verificacion .verificacion__boton:hover {
   text-decoration: none;
 }
 
@@ -178,7 +188,7 @@ const vieneDeRegistro = computed(() => route.query.registro === 'ok')
     background: #ffffff;
   }
 
-  .verificacion {
+  .verificacion.verificacion {
     max-width: none;
     min-height: 100vh;
     min-height: 100dvh;

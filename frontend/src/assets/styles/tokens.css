@@ -1,0 +1,88 @@
+/* =====================================================================
+   Tokens de diseño de CampusMarket (S1-T07).
+   ÚNICA fuente de colores, tipografía, espaciados, radios y sombras.
+   Valores tomados de los mockups de frontend/Diseno (guía visual de E03).
+   Regla: ningún componente ni vista escribe un color o medida "a mano";
+   siempre usa var(--cm-...). Si el diseño cambia, se cambia SOLO aquí.
+   ===================================================================== */
+
+:root {
+  /* La aplicación usa SIEMPRE el modo claro (también en controles nativos). */
+  color-scheme: light;
+
+  /* Colores — modo claro */
+  --cm-fondo: #f8f5ff;              /* fondo de la página */
+  --cm-superficie: #ffffff;         /* tarjeta */
+  --cm-campo: #f1efff;              /* campos y caja de requisitos */
+  --cm-superficie-alta: #e0e0ff;    /* botón deshabilitado */
+  --cm-secundario-fondo: #e7e6ff;   /* botón secundario */
+  --cm-borde: #e0e0ff;
+  --cm-texto: #282b51;              /* títulos, etiquetas y texto principal */
+  --cm-texto-suave: #555881;        /* subtítulos, iconos y textos secundarios */
+  --cm-primario: #0050d4;           /* botón principal, enlaces, checks */
+  --cm-primario-hover: #0043b3;
+  --cm-primario-suave: #e3e8ff;
+  --cm-info-fondo: #7b9cff;         /* alerta informativa */
+  --cm-info-texto: #0c0a00;
+  --cm-error: #b31b25;              /* textos y bordes de error */
+  --cm-error-fondo: #fdb9b9;        /* alerta de error / conflicto 409 */
+  --cm-error-borde: #b31b25;
+  --cm-exito: #067647;
+  --cm-exito-fondo: #dcfae6;
+  --cm-foco: #0050d4;
+  --cm-sobre-primario: #ffffff;     /* texto sobre fondo primario */
+
+  /* Tipografía (escala del diseño) */
+  --cm-fuente: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  --cm-label-sm: 11px;    /* line-height 14px, 600 */
+  --cm-body-sm: 12px;     /* line-height 16px, 400 */
+  --cm-label-md: 12px;    /* line-height 16px, 500 */
+  --cm-body-md: 14px;     /* line-height 20px, 400 */
+  --cm-label-lg: 14px;    /* line-height 20px, 600 */
+  --cm-headline-lg: 30px; /* line-height 38px, 700 */
+  --cm-texto-sm: var(--cm-body-sm);
+  --cm-texto-md: var(--cm-body-md);
+  --cm-texto-lg: 16px;
+  --cm-titulo: var(--cm-headline-lg);
+
+  /* Espaciados */
+  --cm-esp-xs: 0.25rem;
+  --cm-esp-sm: 0.5rem;
+  --cm-esp-md: 1rem;
+  --cm-esp-lg: 1.5rem;
+  --cm-esp-xl: 2rem;
+  --cm-esp-2xl: 3rem;
+
+  /* Bordes y sombras (radios del diseño: 4px y 8px) */
+  --cm-radio: 0.25rem;
+  --cm-radio-lg: 0.5rem;
+  --cm-sombra: 0 10px 15px -3px rgba(40, 43, 81, 0.10), 0 4px 6px -4px rgba(40, 43, 81, 0.10);
+
+  /* Anchos de tarjeta */
+  --cm-ancho-tarjeta: 760px;
+  --cm-ancho-tarjeta-sm: 520px;
+}
+
+/* Modo oscuro: desactivado por defecto. Solo se aplica si alguien agrega
+   data-tema="oscuro" en <html> (por ejemplo, un botón futuro de cambio de tema). */
+:root[data-tema='oscuro'] {
+  color-scheme: dark;
+  --cm-fondo: #0b111e;
+  --cm-superficie: #0f172a;
+  --cm-campo: #131d2e;
+  --cm-borde: #334155;
+  --cm-texto: #f8fafc;
+  --cm-texto-suave: #94a3b8;
+  --cm-primario: #2563eb;
+  --cm-primario-hover: #1d4ed8;
+  --cm-primario-suave: #1e293b;
+  --cm-info-fondo: #131d2e;
+  --cm-info-texto: #dbeafe;
+  --cm-error: #fca5a5;
+  --cm-error-fondo: #451a1a;
+  --cm-error-borde: #f87171;
+  --cm-exito: #6ee7b7;
+  --cm-exito-fondo: #064e3b;
+  --cm-foco: #60a5fa;
+  --cm-sombra: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
