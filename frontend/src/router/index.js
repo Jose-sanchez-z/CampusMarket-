@@ -4,7 +4,7 @@ import { useAuth } from '@/stores/auth'
 
 // =====================================================================
 // Router base (S1-T03).
-// Rutas públicas del Sprint 1: registro, verificación y login.
+// Rutas públicas del Sprint 1: bienvenida, registro, verificación y login.
 // meta.publica se deja marcada para que E05 (S1-T05) agregue la
 // protección de rutas privadas con un guard global.
 // S1-T05: meta.layout = 'publico' usa el layout con encabezado;
@@ -12,8 +12,11 @@ import { useAuth } from '@/stores/auth'
 // =====================================================================
 const routes = [
   {
+    // Pantalla de bienvenida: botones hacia /registro y /login.
     path: '/',
-    redirect: { name: 'registro' },
+    name: 'bienvenida',
+    component: () => import('@/views/BienvenidaView.vue'),
+    meta: { publica: true, soloInvitado: true, layout: 'publico', titulo: 'Bienvenido' },
   },
   {
     path: '/registro',
@@ -56,7 +59,7 @@ const routes = [
   },
   {
     path: '/:pathMatch(.*)*',
-    redirect: { name: 'registro' },
+    redirect: { name: 'bienvenida' },
   },
 ]
 
@@ -71,7 +74,7 @@ router.beforeEach(async (to) => {
   await restaurarSesion() // pregunta al backend solo la primera vez
   // Ruta privada sin sesión: se envía al login.
   if (!to.meta.publica && !estaAutenticado.value) return { name: 'login' }
-  // Con sesión iniciada no tiene sentido ver registro ni login.
+  // Con sesión iniciada no tiene sentido ver bienvenida, registro ni login.
   if (to.meta.soloInvitado && estaAutenticado.value) return { name: 'inicio' }
 })
 
