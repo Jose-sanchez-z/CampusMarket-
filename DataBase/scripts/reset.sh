@@ -11,18 +11,20 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DATABASE_URL="${DATABASE_URL:-postgresql://campus:campus@localhost:5432/campusmarket}"
 PSQL=(psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q)
 
+cd "$ROOT"
+
 echo ">> Borrando esquema public..."
 "${PSQL[@]}" -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 
 echo ">> Aplicando migraciones..."
-for f in $(ls "$ROOT"/db/migration/V*.sql | sort -V); do
+for f in $(ls db/migration/V*.sql | sort -V); do
   echo "   - $(basename "$f")"
   "${PSQL[@]}" -f "$f"
 done
 
 if [[ "${1:-}" == "--seed" ]]; then
   echo ">> Cargando datos de prueba..."
-  for f in $(ls "$ROOT"/db/seeds/*.sql | sort -V); do
+  for f in $(ls db/seeds/*.sql | sort -V); do
     echo "   - $(basename "$f")"
     "${PSQL[@]}" -f "$f"
   done
