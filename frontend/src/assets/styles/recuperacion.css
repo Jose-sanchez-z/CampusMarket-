@@ -1,0 +1,351 @@
+/* =====================================================================
+   Recuperación de contraseña (S2-T03, HU-04) — estilos compartidos por
+   RecuperarContrasenaView y NuevaContrasenaView.
+   Diseño: frontend/Diseno/Sprint2/"Recuperación de contraseña (HU-04).png"
+   y "Error contraseña HU-04.png" (Yari, S2-T01).
+   Todas las clases empiezan por .rec- para no chocar con otras pantallas.
+   ===================================================================== */
+
+.rec-pagina {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: var(--cm-esp-2xl) var(--cm-esp-xl);
+}
+
+.rec {
+  --rec-ambar: #b54708;
+  --rec-ambar-fondo: #fff4e5;
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--cm-esp-lg);
+}
+
+.rec__tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cm-esp-lg);
+  padding: var(--cm-esp-xl);
+  border-top: 4px solid var(--cm-primario);
+  border-radius: var(--cm-radio-lg);
+  background: var(--cm-superficie);
+  box-shadow: var(--cm-sombra);
+}
+
+.rec__cabecera {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--cm-esp-sm);
+  text-align: center;
+}
+
+.rec__logo {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+}
+
+.rec__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--cm-primario-suave);
+  color: var(--cm-primario);
+  font-size: var(--cm-label-sm);
+  line-height: 18px;
+  font-weight: 600;
+}
+.rec__chip .material-symbols-outlined { font-size: 14px; }
+
+.rec__titulo {
+  margin: 0;
+  font-size: var(--cm-headline-lg);
+  line-height: 38px;
+  font-weight: 700;
+  color: var(--cm-texto);
+}
+
+.rec__texto {
+  margin: 0;
+  max-width: 420px;
+  font-size: var(--cm-body-md);
+  line-height: 20px;
+  color: var(--cm-texto-suave);
+}
+
+.rec__correo {
+  color: var(--cm-primario);
+  font-weight: 600;
+  word-break: break-all;
+}
+
+.rec__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cm-esp-md);
+}
+
+/* Etiqueta con pista a la derecha ("Ej: @gmail.com", "Expira en...") */
+.rec__pista {
+  font-size: var(--cm-body-sm);
+  font-weight: 400;
+  color: var(--cm-texto-suave);
+}
+
+.rec__ayuda {
+  margin: 0;
+  font-size: var(--cm-body-sm);
+  line-height: 16px;
+  color: var(--cm-texto-suave);
+}
+
+.rec__fila-ayuda {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--cm-esp-sm);
+}
+
+/* Botón principal de ancho completo */
+.rec__boton {
+  width: 100%;
+  justify-content: center;
+}
+
+.rec__enlace {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--cm-primario);
+  font-family: inherit;
+  font-size: var(--cm-label-lg);
+  line-height: 20px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.rec__enlace:hover:not(:disabled) { text-decoration: underline; }
+.rec__enlace:disabled { color: var(--cm-texto-suave); cursor: not-allowed; }
+.rec__enlace .material-symbols-outlined { font-size: 18px; }
+.rec__enlace--chico { font-size: var(--cm-body-sm); line-height: 16px; }
+
+.rec__centro { display: flex; justify-content: center; }
+.rec__flex { flex: 1; min-width: 0; }
+.rec__derecha { text-align: right; }
+.rec__centro--doble { flex-wrap: wrap; gap: var(--cm-esp-lg); }
+
+/* Texto de estado junto a la etiqueta (FormField): gris por defecto,
+   azul si va bien y rojo si va mal. Selectores largos para ganarle al
+   estilo scoped de FormField. */
+.rec-pagina .rec .campo__estado { color: var(--cm-texto-suave); font-weight: 500; }
+.rec-pagina .rec .rec__estado-ok .campo__estado { color: var(--cm-primario); font-weight: 600; }
+.rec-pagina .rec .rec__estado-mal .campo__estado { color: var(--cm-error); font-weight: 600; }
+.rec-pagina .rec .rec__estado-ambar .campo__estado { color: var(--rec-ambar); font-weight: 600; }
+
+/* Cajas informativas (cifrado, sesiones, consejo) */
+.rec__caja {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cm-esp-sm);
+  padding: var(--cm-esp-md);
+  border-radius: var(--cm-radio-lg);
+  background: var(--cm-campo);
+  color: var(--cm-texto);
+  font-size: var(--cm-body-sm);
+  line-height: 16px;
+}
+.rec__caja > .material-symbols-outlined { font-size: 20px; color: var(--cm-texto-suave); }
+.rec__caja p { margin: 0; }
+.rec__caja strong { display: block; margin-bottom: 2px; font-size: var(--cm-label-md); }
+
+.rec__consejo {
+  background: var(--cm-superficie);
+  border: 1px solid var(--cm-borde);
+}
+.rec__consejo > .material-symbols-outlined { color: var(--cm-primario); }
+
+/* Alertas en bloque: error (rojo), ámbar (vencido), éxito (verde) */
+.rec__alerta {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--cm-esp-sm);
+  padding: var(--cm-esp-md);
+  border: 1px solid var(--cm-error-borde);
+  border-radius: var(--cm-radio-lg);
+  background: color-mix(in srgb, var(--cm-error-fondo) 45%, var(--cm-superficie));
+  color: var(--cm-texto);
+  font-size: var(--cm-body-sm);
+  line-height: 16px;
+}
+.rec__alerta > .material-symbols-outlined { font-size: 20px; color: var(--cm-error); }
+.rec__alerta p { margin: 0; }
+.rec__alerta strong { display: block; margin-bottom: 2px; color: var(--cm-error); font-size: var(--cm-label-lg); }
+.rec__alerta .rec__boton { margin-top: var(--cm-esp-sm); }
+
+.rec__alerta--ambar { border-color: var(--rec-ambar); background: var(--rec-ambar-fondo); }
+.rec__alerta--ambar > .material-symbols-outlined,
+.rec__alerta--ambar strong { color: var(--rec-ambar); }
+
+.rec__alerta--exito { border-color: var(--cm-exito); background: var(--cm-exito-fondo); }
+.rec__alerta--exito > .material-symbols-outlined,
+.rec__alerta--exito strong { color: var(--cm-exito); }
+
+/* Icono grande redondo de los estados (correo enviado, éxito) */
+.rec__icono-estado {
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  background: var(--cm-primario-suave);
+  color: var(--cm-primario);
+}
+.rec__icono-estado .material-symbols-outlined { font-size: 36px; }
+.rec__icono-estado--exito { background: var(--cm-exito-fondo); color: var(--cm-exito); }
+
+/* Chip ámbar "Expira en 29:59 min" */
+.rec__expira {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--rec-ambar-fondo);
+  color: var(--rec-ambar);
+  font-size: var(--cm-label-sm);
+  line-height: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.rec__expira .material-symbols-outlined { font-size: 14px; }
+
+/* Campo del token: letra monoespaciada y espaciada, como las casillas del diseño */
+.rec .entrada__input.rec__token {
+  font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  font-size: 15px;
+  letter-spacing: 0.06em;
+}
+
+/* Contraseña con botón de ojo */
+.rec__con-ojo { position: relative; }
+.rec .rec__con-ojo .entrada__input { padding-right: 44px; }
+.rec__ojo {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  display: flex;
+  padding: 4px;
+  border: none;
+  border-radius: var(--cm-radio);
+  background: none;
+  color: var(--cm-texto-suave);
+  cursor: pointer;
+}
+.rec__ojo:hover { color: var(--cm-primario); }
+.rec__ojo .material-symbols-outlined { font-size: 20px; }
+
+/* Barra de seguridad de la contraseña */
+.rec__barra {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--cm-superficie-alta);
+  overflow: hidden;
+}
+.rec__barra span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--cm-primario);
+  transition: width 0.25s ease;
+}
+.rec__barra--1 span, .rec__barra--0 span { background: var(--cm-error); }
+.rec__barra--2 span { background: var(--rec-ambar); }
+
+.rec__nivel { font-weight: 600; color: var(--cm-primario); }
+.rec__nivel--bajo { color: var(--cm-error); }
+.rec__nivel--medio { color: var(--rec-ambar); }
+
+/* Requisitos de la contraseña ("Tu clave debe incluir:") */
+.rec__requisitos {
+  padding: var(--cm-esp-md);
+  border-radius: var(--cm-radio-lg);
+  background: var(--cm-campo);
+}
+.rec__requisitos-titulo {
+  margin: 0 0 var(--cm-esp-sm);
+  font-size: var(--cm-label-md);
+  font-weight: 600;
+  color: var(--cm-texto);
+}
+.rec__requisitos ul {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px var(--cm-esp-md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.rec__requisitos li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--cm-body-sm);
+  line-height: 16px;
+  color: var(--cm-texto-suave);
+}
+.rec__requisitos li .material-symbols-outlined { font-size: 16px; }
+.rec__requisitos li.rec__ok { color: var(--cm-primario); }
+
+/* Estado "coinciden / no coinciden" junto a la etiqueta */
+.rec__coinciden { color: var(--cm-primario); }
+.rec__no-coinciden { color: var(--cm-error); }
+
+/* Barra de progreso de la redirección tras el éxito */
+.rec__progreso {
+  height: 6px;
+  margin-top: var(--cm-esp-sm);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--cm-exito) 20%, transparent);
+  overflow: hidden;
+}
+.rec__progreso span {
+  display: block;
+  height: 100%;
+  background: var(--cm-exito);
+  animation: rec-progreso var(--rec-duracion, 3s) linear forwards;
+}
+@keyframes rec-progreso { from { width: 0; } to { width: 100%; } }
+
+/* Celular: la tarjeta ocupa toda la pantalla, como el mockup de 390 px */
+@media (max-width: 600px) {
+  .rec-pagina { padding: 0; }
+  .rec { gap: var(--cm-esp-md); }
+  .rec__tarjeta {
+    min-height: 100vh;
+    padding: var(--cm-esp-lg) var(--cm-esp-md);
+    border-top: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .rec__titulo { font-size: 24px; line-height: 32px; }
+  .rec__logo { width: 64px; height: 64px; }
+  .rec__requisitos ul { grid-template-columns: 1fr; }
+  .rec__fila-ayuda { flex-direction: column; gap: 4px; }
+  .rec__derecha { text-align: left; }
+  .rec__consejo { margin: 0 var(--cm-esp-md) var(--cm-esp-md); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rec__progreso span { animation: none; width: 100%; }
+}

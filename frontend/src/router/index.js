@@ -51,6 +51,21 @@ const routes = [
     meta: { publica: true, soloInvitado: true, titulo: 'Iniciar sesión' },
   },
   {
+    // Recuperar contraseña, paso 1: pedir el código por correo (S2-T03, HU-04).
+    path: '/recuperar-contrasena',
+    name: 'recuperar-contrasena',
+    component: () => import('@/views/RecuperarContrasenaView.vue'),
+    meta: { publica: true, soloInvitado: true, titulo: 'Recuperar contraseña' },
+  },
+  {
+    // Recuperar contraseña, paso 2: código + nueva contraseña (S2-T03, HU-04).
+    // Acepta ?token=... por si más adelante el correo trae un enlace.
+    path: '/recuperar-contrasena/nueva',
+    name: 'nueva-contrasena',
+    component: () => import('@/views/NuevaContrasenaView.vue'),
+    meta: { publica: true, soloInvitado: true, titulo: 'Crear nueva contraseña' },
+  },
+  {
     // S1-T05: página privada de ejemplo (solo con sesión iniciada).
     path: '/inicio',
     name: 'inicio',
