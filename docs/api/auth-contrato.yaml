@@ -166,6 +166,71 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Mensaje' }
+  /auth/recuperacion/solicitar:
+    post:
+      tags: [Recuperación de contraseña]
+      summary: Solicitar token de recuperación (HU-04, CA-04-01)
+      description: >
+        Público. Responde SIEMPRE 200 con el mismo cuerpo, exista o no el correo, esté la cuenta
+        activa o pendiente, o se haya superado el límite de solicitudes (3 por hora por correo,
+        10 por hora por IP). Si el correo existe y la cuenta está ACTIVA, se envía un token
+        aleatorio de un solo uso que vence en 30 minutos y se invalidan los anteriores.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [correo]
+              properties:
+                correo: { type: string, example: ana@uni.edu }
+      responses:
+        '200':
+          description: Respuesta genérica (no revela si el correo está registrado).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Mensaje' }
+              example: { mensaje: Si el correo está registrado, te enviamos un token de recuperación }
+        '400': { description: Correo vacío o con formato inválido, content: { application/json: { schema: { $ref: '#/components/schemas/Mensaje' } } } }
+  /auth/recuperacion/confirmar:
+    post:
+      tags: [Recuperación de contraseña]
+      summary: Confirmar recuperación y cambiar la contraseña (HU-04, CA-04-02 y CA-04-03)
+      description: >
+        Público. Con token válido guarda el hash de la nueva contraseña, marca el token como
+        usado y revoca TODAS las sesiones del usuario (debe iniciar sesión de nuevo).
+        Con token inexistente, vencido, usado o alterado no modifica la contraseña.
+        El token es largo (43 caracteres, base64 url-safe); no es un código de 6 dígitos.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, nuevaContrasena]
+              properties:
+                token: { type: string, example: k3J9x0Qm1b7VtYc2sL8nPzW4aRu6HdEeFgIoXjMqNlA }
+                nuevaContrasena: { type: string, minLength: 8, maxLength: 72, example: ClaveNueva456! }
+      responses:
+        '200':
+          description: Contraseña actualizada y sesiones revocadas.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Mensaje' }
+              example: { mensaje: Contraseña actualizada. Inicia sesión de nuevo }
+        '400':
+          description: Token inválido, vencido o ya usado (o campos vacíos). La contraseña no se modifica.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Mensaje' }
+              example: { mensaje: Token inválido o vencido }
+        '422':
+          description: La nueva contraseña no cumple la política (8 a 72 caracteres). El token NO se consume.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Mensaje' }
+              example: { mensaje: La contraseña debe tener entre 8 y 72 caracteres }
+        '429': { description: Demasiados intentos fallidos desde esa IP, content: { application/json: { schema: { $ref: '#/components/schemas/Mensaje' } } } }
 components:
   securitySchemes:
     cookieSesion:
