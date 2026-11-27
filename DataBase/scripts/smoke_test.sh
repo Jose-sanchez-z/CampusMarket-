@@ -29,10 +29,36 @@ BEGIN
   IF n < 1 THEN RAISE EXCEPTION 'no hay tokens usados'; END IF;
   SELECT count(*) INTO n FROM sesiones WHERE revocada;
   IF n < 1 THEN RAISE EXCEPTION 'no hay sesiones revocadas'; END IF;
-  RAISE NOTICE 'OK    semillas cubren pendientes/activos y tokens vigentes/vencidos/usados';
+  SELECT count(*) INTO n FROM contactos WHERE es_publico;
+  IF n < 1 THEN RAISE EXCEPTION 'no hay contactos públicos'; END IF;
+  SELECT count(*) INTO n FROM contactos WHERE NOT es_publico;
+  IF n < 1 THEN RAISE EXCEPTION 'no hay contactos privados'; END IF;
+  SELECT count(*) INTO n FROM categorias WHERE activa;
+  IF n < 6 THEN RAISE EXCEPTION 'se esperaban al menos 6 categorías activas y hay %', n; END IF;
+  SELECT count(*) INTO n FROM categorias WHERE NOT activa;
+  IF n < 1 THEN RAISE EXCEPTION 'no hay categorías inactivas'; END IF;
+  SELECT count(*) INTO n FROM productos WHERE estado='DISPONIBLE';
+  IF n < 1 THEN RAISE EXCEPTION 'no hay productos DISPONIBLE'; END IF;
+  SELECT count(*) INTO n FROM productos WHERE estado='INACTIVO';
+  IF n < 1 THEN RAISE EXCEPTION 'no hay productos INACTIVO'; END IF;
+  SELECT count(*) INTO n FROM tokens_recuperacion WHERE NOT usado AND vencimiento > now();
+  IF n < 1 THEN RAISE EXCEPTION 'no hay tokens de recuperación vigentes'; END IF;
+  SELECT count(*) INTO n FROM tokens_recuperacion WHERE NOT usado AND vencimiento <= now();
+  IF n < 1 THEN RAISE EXCEPTION 'no hay tokens de recuperación vencidos'; END IF;
+  SELECT count(*) INTO n FROM tokens_recuperacion WHERE usado;
+  IF n < 1 THEN RAISE EXCEPTION 'no hay tokens de recuperación usados'; END IF;
+  RAISE NOTICE 'OK    semillas cubren Sprint 1 y Sprint 2 (contactos, categorías, productos, recuperación)';
 END $$;
 SQL
 
 echo
-echo "=== 3/3 Restricciones y flujo básico ==="
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$ROOT/db/tests/smoke_test.sql"
+echo "=== 3/3 Restricciones, flujo básico e integridad Sprint 2 ==="
+correr_sql() {
+  if [[ "${OSTYPE:-}" == msys* || "${OSTYPE:-}" == cygwin* ]]; then
+    sed 's|\\o /dev/null|\\o NUL|g' "$1" | psql "$DATABASE_URL" -v ON_ERROR_STOP=1
+  else
+    psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$1"
+  fi
+}
+correr_sql "$ROOT/db/tests/smoke_test.sql"
+correr_sql "$ROOT/db/tests/integridad_recuperacion_s2.sql"

@@ -40,11 +40,16 @@ BEGIN
 END $$;
 
 -- ---------------------------------------------------------------------
--- 1) Existencia de tablas
+-- 1) Existencia de tablas (Sprint 1 y Sprint 2)
 -- ---------------------------------------------------------------------
-SELECT pg_temp.afirmar('tabla usuarios existe',  to_regclass('public.usuarios') IS NOT NULL);
-SELECT pg_temp.afirmar('tabla tokens existe',    to_regclass('public.tokens')   IS NOT NULL);
-SELECT pg_temp.afirmar('tabla sesiones existe',  to_regclass('public.sesiones') IS NOT NULL);
+SELECT pg_temp.afirmar('tabla usuarios existe',            to_regclass('public.usuarios')            IS NOT NULL);
+SELECT pg_temp.afirmar('tabla tokens existe',              to_regclass('public.tokens')              IS NOT NULL);
+SELECT pg_temp.afirmar('tabla sesiones existe',            to_regclass('public.sesiones')            IS NOT NULL);
+SELECT pg_temp.afirmar('tabla tokens_recuperacion existe', to_regclass('public.tokens_recuperacion') IS NOT NULL);
+SELECT pg_temp.afirmar('tabla contactos existe',           to_regclass('public.contactos')           IS NOT NULL);
+SELECT pg_temp.afirmar('tabla categorias existe',          to_regclass('public.categorias')          IS NOT NULL);
+SELECT pg_temp.afirmar('tabla productos existe',           to_regclass('public.productos')           IS NOT NULL);
+SELECT pg_temp.afirmar('tabla imagenes existe',            to_regclass('public.imagenes')            IS NOT NULL);
 
 -- Para no chocar con datos sembrados, el test usa correos propios.
 -- ---------------------------------------------------------------------
