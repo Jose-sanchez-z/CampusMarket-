@@ -66,11 +66,17 @@ const routes = [
     meta: { publica: true, soloInvitado: true, titulo: 'Crear nueva contraseña' },
   },
   {
-    // S1-T05: página privada de ejemplo (solo con sesión iniciada).
+    // Tras iniciar sesión se llega al catálogo.
     path: '/inicio',
     name: 'inicio',
-    component: () => import('@/views/InicioView.vue'),
-    meta: { publica: false, layout: 'publico', titulo: 'Inicio' },
+    redirect: { name: 'catalogo' },
+  },
+  {
+    // S2-T05: catálogo de productos (solo con sesión iniciada).
+    path: '/catalogo',
+    name: 'catalogo',
+    component: () => import('@/views/CatalogoView.vue'),
+    meta: { publica: false, layout: 'publico', titulo: 'Catálogo' },
   },
   {
     path: '/:pathMatch(.*)*',
