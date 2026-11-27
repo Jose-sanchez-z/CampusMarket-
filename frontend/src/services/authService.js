@@ -16,6 +16,7 @@
 //   429 demasiados reenvíos (3 en 15 min)
 //
 // Login y logout los agrega E05 en S1-T06.
+// Recuperación de contraseña (HU-04): al final del archivo (S2-T03).
 // =====================================================================
 import { post, ApiError } from './api'
 
@@ -85,5 +86,61 @@ function verificacionSimulada({ token }) {
 function reenvioSimulado() {
   return new Promise((resolve) => {
     setTimeout(() => resolve({ status: 200, datos: { mensaje: 'Nuevo código enviado' } }), 700)
+  })
+}
+
+// =====================================================================
+// HU-04 Recuperación de contraseña (S2-T03) — backend S2-T09 (E07)
+//   POST /auth/recuperacion/solicitar  { correo }
+//   200 { mensaje } SIEMPRE igual, exista o no el correo (CA-04-01)
+//   400 correo vacío o con formato inválido
+//   (el límite de 3 solicitudes/hora no cambia la respuesta: sigue siendo 200)
+//
+//   POST /auth/recuperacion/confirmar  { token, nuevaContrasena }
+//   200 contraseña cambiada y TODAS las sesiones revocadas (CA-04-02)
+//   400 token inválido, vencido o usado: la clave NO cambia (CA-04-03)
+//   422 la contraseña no cumple (8 a 72): el token NO se gasta
+//   429 demasiados intentos fallidos desde la IP
+// =====================================================================
+
+/** Pide el token de recuperación. La respuesta no revela si el correo existe. */
+export async function solicitarRecuperacion({ correo }) {
+  if (SIMULADA) return solicitudSimulada()
+  return post('/auth/recuperacion/solicitar', { correo })
+}
+
+/** Cambia la contraseña con el token recibido por correo. */
+export async function confirmarRecuperacion({ token, nuevaContrasena }) {
+  const cuerpo = { token, nuevaContrasena }
+  if (SIMULADA) return confirmacionSimulada(cuerpo)
+  return post('/auth/recuperacion/confirmar', cuerpo)
+}
+
+// ---------------------------------------------------------------------
+// Modo simulado de recuperación (VITE_API_SIMULADA=true):
+//   Solicitar: siempre 200 con el mensaje genérico.
+//   Confirmar: token que empieza por "vencido" -> 400 · por "limite" -> 429
+//   · cualquier otro token de 43 caracteres -> 200.
+// ---------------------------------------------------------------------
+function solicitudSimulada() {
+  return new Promise((resolve) => {
+    setTimeout(
+      () => resolve({ status: 200, datos: { mensaje: 'Si el correo está registrado, te enviamos un token de recuperación' } }),
+      900
+    )
+  })
+}
+
+function confirmacionSimulada({ token }) {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      if (token.startsWith('vencido')) {
+        reject(new ApiError(400, { mensaje: 'Token inválido o vencido' }))
+      } else if (token.startsWith('limite')) {
+        reject(new ApiError(429, { mensaje: 'Demasiados intentos. Intenta de nuevo más tarde' }))
+      } else {
+        resolve({ status: 200, datos: { mensaje: 'Contraseña actualizada. Inicia sesión de nuevo' } })
+      }
+    }, 900)
   })
 }

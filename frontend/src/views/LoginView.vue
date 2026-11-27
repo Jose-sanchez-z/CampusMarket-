@@ -93,7 +93,8 @@ function mostrarError(e) {
 
         <div class="fila-etiqueta">
           <label for="login-password">Contraseña</label>
-          <a href="#" class="enlace" @click.prevent>¿Olvidaste tu contraseña?</a>
+          <!-- S2-T03 (HU-04): lleva a la recuperación con el correo ya escrito -->
+          <RouterLink :to="{ name: 'recuperar-contrasena', state: { correo: correo.trim() } }" class="enlace">¿Olvidaste tu contraseña?</RouterLink>
         </div>
         <div class="campo-password">
           <input
