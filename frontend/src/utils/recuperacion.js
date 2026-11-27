@@ -54,3 +54,21 @@ export function nivelPassword(password, minimo = 8) {
   const TEXTOS = ['Muy débil', 'Débil', 'Media', 'Segura', 'Muy segura']
   return { nivel: cumplidas, texto: TEXTOS[cumplidas] }
 }
+
+/**
+ * Textos del checklist en celular (mockup 390 px: "8+ caracteres cumplido",
+ * "Mayúscula detectada"...). A diferencia del mockup, no se muestran los
+ * caracteres de la clave (p. ej. "(C)" o "(2025)") para no exponerla en pantalla.
+ */
+export function reglasMovil(password, minimo = 8) {
+  const TEXTOS = {
+    longitud: [`${minimo}+ caracteres cumplido`, `Mínimo ${minimo} caracteres`],
+    mayuscula: ['Mayúscula detectada', 'Al menos una mayúscula (A-Z)'],
+    numero: ['Número incluido', 'Al menos un número (0-9)'],
+    especial: ['Símbolo especial incluido', 'Símbolo especial (@, $, !, %)']
+  }
+  return reglasPassword(password, minimo).map((regla) => ({
+    ...regla,
+    texto: TEXTOS[regla.id][regla.cumple ? 0 : 1]
+  }))
+}

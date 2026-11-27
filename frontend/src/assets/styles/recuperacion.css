@@ -327,24 +327,206 @@
 }
 @keyframes rec-progreso { from { width: 0; } to { width: 100%; } }
 
-/* Celular: la tarjeta ocupa toda la pantalla, como el mockup de 390 px */
-@media (max-width: 600px) {
-  .rec-pagina { padding: 0; }
-  .rec { gap: var(--cm-esp-md); }
-  .rec__tarjeta {
-    min-height: 100vh;
-    padding: var(--cm-esp-lg) var(--cm-esp-md);
-    border-top: none;
-    border-radius: 0;
-    box-shadow: none;
-  }
-  .rec__titulo { font-size: 24px; line-height: 32px; }
-  .rec__logo { width: 64px; height: 64px; }
-  .rec__requisitos ul { grid-template-columns: 1fr; }
-  .rec__fila-ayuda { flex-direction: column; gap: 4px; }
-  .rec__derecha { text-align: left; }
-  .rec__consejo { margin: 0 var(--cm-esp-md) var(--cm-esp-md); }
+/* Bloque superior de la tarjeta (en celular el bloque inferior queda abajo) */
+.rec__superior {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cm-esp-lg);
 }
+
+/* =====================================================================
+   CELULAR (≤ 767 px, useEsMovil) — mockups de 390 px del zip de Yari:
+   "RECUPERAR CONTRASEÑA", "Correo enviado" y "Crear nueva contraseña".
+   Los selectores empiezan por .rec-pagina.rec-movil para ganarle a los
+   estilos scoped de BaseInput y FormField.
+   ===================================================================== */
+.rec-pagina.rec-movil {
+  padding: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #ffffff;
+}
+
+.rec-movil .rec {
+  max-width: none;
+  gap: 0;
+}
+
+.rec-movil .rec__tarjeta {
+  min-height: 100vh;
+  min-height: 100dvh;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border-top: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.rec-movil .rec__superior { gap: 12px; }
+
+.rec-movil__barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.rec-movil__volver {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  color: #475569;
+  cursor: pointer;
+}
+.rec-movil__volver:disabled { color: #94a3b8; }
+.rec-movil__volver .material-symbols-outlined { font-size: 20px; }
+
+.rec-movil__logo { height: 32px; width: auto; object-fit: contain; }
+.rec-movil__logo--sm { height: 28px; }
+.rec-movil__espacio { width: 36px; }
+
+/* Título y texto alineados a la izquierda */
+.rec-movil .rec__cabecera { align-items: flex-start; text-align: left; gap: 4px; }
+.rec-movil .rec__titulo { font-size: 24px; line-height: 30px; }
+.rec-movil .rec__texto { max-width: none; font-size: 13px; line-height: 18px; }
+
+/* Campos redondeados de 44 px */
+.rec-pagina.rec-movil .rec .entrada__input {
+  height: 44px;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  background: #f8fafc;
+}
+.rec-pagina.rec-movil .rec .entrada__input:focus { border-color: var(--cm-primario); }
+.rec-pagina.rec-movil .rec .entrada--valido .entrada__input { border-color: #2069fe; }
+.rec-pagina.rec-movil .rec .entrada--error .entrada__input { border-color: var(--cm-error-borde); }
+.rec-pagina.rec-movil .rec .entrada__input.rec__input-verde { border-color: #16a34a; }
+.rec-pagina.rec-movil .rec .entrada__icono { color: var(--cm-primario); }
+.rec-pagina.rec-movil .rec .entrada--error .entrada__icono { color: var(--cm-error); }
+.rec-pagina.rec-movil .rec .campo__etiqueta { font-size: 13px; }
+
+/* "Coincide" en verde, como el mockup */
+.rec-pagina.rec-movil .rec .rec__estado-ok .campo__estado { color: #16a34a; }
+
+/* Checklist en una columna con textos del celular */
+.rec-movil .rec__requisitos { padding: 10px; border-radius: 12px; background: #f8fafc; }
+.rec-movil .rec__requisitos ul { grid-template-columns: 1fr; gap: 6px; }
+.rec-movil .rec__requisitos li { font-size: 12px; font-weight: 500; }
+.rec-movil .rec__requisitos li.rec__ok { color: #16a34a; }
+
+.rec-movil .rec__fila-ayuda { flex-direction: column; gap: 4px; }
+.rec-movil .rec__derecha { text-align: left; }
+
+/* Acciones fijas abajo */
+.rec-movil__inferior {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 8px;
+}
+.rec-movil .rec-movil__inferior .rec__boton {
+  height: 48px;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+}
+.rec-movil__icono-boton { font-size: 18px; vertical-align: -4px; margin-right: 6px; }
+
+.rec-movil__secundario,
+.rec-movil__reenviar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 44px;
+  border: none;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.rec-movil__secundario { background: var(--cm-primario-suave); color: var(--cm-primario); }
+.rec-movil__reenviar { background: #f1f5f9; color: #475569; }
+.rec-movil__reenviar:disabled { color: #94a3b8; cursor: not-allowed; }
+.rec-movil__secundario .material-symbols-outlined,
+.rec-movil__reenviar .material-symbols-outlined { font-size: 18px; }
+
+.rec-movil__cancelar {
+  padding: 8px;
+  text-align: center;
+  color: var(--cm-texto-suave);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+}
+.rec-movil__cancelar:hover { color: var(--cm-texto); }
+
+/* "¡Revisa tu correo!" en celular */
+.rec-movil__enviado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  text-align: center;
+}
+.rec-movil__enviado .rec__texto { text-align: center; }
+.rec-movil__ilustracion {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin: 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--cm-primario-suave) 70%, transparent);
+  color: var(--cm-primario);
+}
+.rec-movil__ilustracion > .material-symbols-outlined:first-child { font-size: 40px; }
+.rec-movil__insignia {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: #16a34a;
+  color: #ffffff;
+  font-size: 16px !important;
+  font-variation-settings: 'FILL' 1;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.rec-movil__pildora,
+.rec-movil__nota {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #f8fafc;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--cm-texto-suave);
+}
+.rec-movil__pildora > .material-symbols-outlined { color: var(--cm-primario); font-size: 22px; }
+.rec-movil__tiempo { color: var(--cm-error); font-family: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace; }
+.rec-movil__nota { align-items: flex-start; gap: 8px; background: #f1f5f9; }
+.rec-movil__nota > .material-symbols-outlined { font-size: 16px; color: #94a3b8; margin-top: 1px; }
+.rec-movil__nota p { margin: 0; }
 
 @media (prefers-reduced-motion: reduce) {
   .rec__progreso span { animation: none; width: 100%; }

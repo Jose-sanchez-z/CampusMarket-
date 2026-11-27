@@ -7,7 +7,8 @@ import {
   normalizarToken,
   validarToken,
   validarNuevaContrasena,
-  nivelPassword
+  nivelPassword,
+  reglasMovil
 } from '../src/utils/recuperacion.js'
 import { formularioValido } from '../src/utils/validaciones.js'
 
@@ -60,4 +61,19 @@ test('nivelPassword sube con cada regla cumplida', () => {
   assert.equal(nivelPassword('Abcdefgh').nivel, 2)
   assert.equal(nivelPassword('Abcdefg1').nivel, 3)
   assert.deepEqual(nivelPassword('Abcdef1!'), { nivel: 4, texto: 'Muy segura' })
+})
+
+test('reglasMovil: textos del mockup de celular sin mostrar la clave', () => {
+  const pendientes = reglasMovil('')
+  assert.deepEqual(pendientes.map((r) => r.cumple), [false, false, false, false])
+  assert.equal(pendientes[0].texto, 'Mínimo 8 caracteres')
+  const cumplidas = reglasMovil('Campus#2025!')
+  assert.deepEqual(cumplidas.map((r) => r.texto), [
+    '8+ caracteres cumplido',
+    'Mayúscula detectada',
+    'Número incluido',
+    'Símbolo especial incluido'
+  ])
+  // Ningún texto revela caracteres de la contraseña
+  assert.ok(cumplidas.every((r) => !r.texto.includes('2025') && !r.texto.includes('(C)')))
 })
