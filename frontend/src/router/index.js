@@ -79,6 +79,12 @@ const routes = [
     meta: { publica: false, layout: 'publico', titulo: 'Catálogo' },
   },
   {
+    path: '/productos/nuevo',
+    name: 'nuevo-producto',
+    component: () => import('@/views/NuevoProductoView.vue'),
+    meta: { publica: false, layout: 'publico', titulo: 'Publicar producto' },
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: { name: 'bienvenida' },
   },

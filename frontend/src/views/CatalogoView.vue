@@ -68,8 +68,11 @@ onBeforeUnmount(() => clearTimeout(temporizador))
         <h1>Catálogo de Productos</h1>
         <p class="intro">Encuentra libros, tecnología y accesorios verificados dentro del campus.</p>
       </div>
+      <RouterLink :to="{ name: 'nuevo-producto' }" class="boton">Publicar producto</RouterLink>
       <span v-if="pastilla" class="pastilla">{{ pastilla }}</span>
     </div>
+
+    <p v-if="route.query.publicado === '1'" role="status">Producto publicado.</p>
 
     <div class="barra">
       <label class="buscador">

@@ -23,10 +23,20 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.jayway.jsonpath.JsonPath;
+
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.stream.Stream;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -173,6 +183,64 @@ class EdicionImagenesProductoTest {
                 .andExpect(jsonPath("$.url").isNotEmpty());
 
         assertEquals(1, imagenes.findByProductoIdOrderByIdAsc(producto.getId()).size());
+    }
+
+    @Test
+    void publicaProductoConFotoYRevierteSiElArchivoEsInvalido() throws Exception {
+        Cookie cookie = login(vendedor.getCorreo());
+        MockMultipartFile datos = new MockMultipartFile("producto", "", "application/json", """
+                {"titulo":"Libro de cálculo","descripcion":"Como nuevo","categoriaId":%d,"precio":45000}
+                """.formatted(categoria.getId()).getBytes(StandardCharsets.UTF_8));
+        MockMultipartFile archivoInvalido = new MockMultipartFile("archivo", "foto.png", "image/png", new byte[]{1});
+
+        mvc.perform(multipart("/productos").file(datos).file(archivoInvalido).cookie(cookie))
+                .andExpect(status().isUnprocessableContent());
+
+        assertEquals(1, productos.count());
+        assertEquals(0, imagenes.count());
+
+        String respuesta = mvc.perform(multipart("/productos").file(datos).file(crearPngValido("foto.png")).cookie(cookie))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.estado").value("DISPONIBLE"))
+                .andExpect(jsonPath("$.imagenes.length()").value(1))
+                .andReturn().getResponse().getContentAsString();
+        String url = JsonPath.read(respuesta, "$.imagenPrincipal");
+
+        mvc.perform(get(url))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.IMAGE_PNG));
+    }
+
+    @Test
+    void dosSubidasEnParaleloSoloPuedenOcuparUnaPlaza() throws Exception {
+        Cookie cookie = login(vendedor.getCorreo());
+        String url = "/productos/" + producto.getId() + "/imagenes";
+        for (int i = 0; i < 4; i++) {
+            mvc.perform(multipart(url).file(crearPngValido("inicial.png")).cookie(cookie))
+                    .andExpect(status().isCreated());
+        }
+
+        CountDownLatch preparadas = new CountDownLatch(2);
+        CountDownLatch comenzar = new CountDownLatch(1);
+        var ejecutor = Executors.newFixedThreadPool(2);
+        try {
+            Callable<Integer> subir = () -> {
+                preparadas.countDown();
+                assertTrue(comenzar.await(10, TimeUnit.SECONDS));
+                return mvc.perform(multipart(url).file(crearPngValido("paralela.png")).cookie(cookie))
+                        .andReturn().getResponse().getStatus();
+            };
+            var primera = ejecutor.submit(subir);
+            var segunda = ejecutor.submit(subir);
+            assertTrue(preparadas.await(10, TimeUnit.SECONDS));
+            comenzar.countDown();
+            var estados = Stream.of(primera.get(10, TimeUnit.SECONDS),
+                    segunda.get(10, TimeUnit.SECONDS)).sorted().toList();
+            assertEquals(List.of(201, 422), estados);
+            assertEquals(5, imagenes.findByProductoIdOrderByIdAsc(producto.getId()).size());
+        } finally {
+            ejecutor.shutdownNow();
+        }
     }
 
     @Test

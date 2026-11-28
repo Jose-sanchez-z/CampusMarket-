@@ -9,6 +9,8 @@ import com.campusmarket.demo.sesion.Usuario;
 import com.campusmarket.demo.sesion.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
@@ -89,6 +91,10 @@ public class ProductoService {
     public Producto verificarPropietario(Long productoId, Usuario usuario) {
         Producto producto = productos.findById(productoId)
                 .orElseThrow(() -> new RecursoNoEncontrado("Producto no encontrado"));
+        return exigirPropietario(producto, usuario);
+    }
+
+    private Producto exigirPropietario(Producto producto, Usuario usuario) {
         if (usuario == null || !producto.getVendedorId().equals(usuario.getId())) {
             throw new AccesoDenegado("No tienes permiso para modificar este producto");
         }
@@ -117,6 +123,14 @@ public class ProductoService {
         ));
 
         return armarRespuesta(guardado, categoria.getNombre(), vendedor.getNombre(), List.of());
+    }
+
+    @Transactional
+    public ProductoResponse crearConImagen(Usuario vendedor, String titulo, String descripcion,
+                                           Long categoriaId, BigDecimal precio, MultipartFile archivo) {
+        ProductoResponse creado = crear(vendedor, titulo, descripcion, categoriaId, precio);
+        guardarImagen(creado.id(), archivo);
+        return obtenerPorId(creado.id(), vendedor);
     }
 
     @Transactional
@@ -169,26 +183,32 @@ public class ProductoService {
 
     @Transactional
     public ImagenDto agregarImagen(Long productoId, Usuario vendedor, MultipartFile archivo) {
-        verificarPropietario(productoId, vendedor);
+        // El bloqueo del producto mantiene el recuento y la inserción en la misma sección crítica.
+        Producto producto = productos.buscarParaActualizar(productoId)
+                .orElseThrow(() -> new RecursoNoEncontrado("Producto no encontrado"));
+        exigirPropietario(producto, vendedor);
 
         List<ImagenProducto> actuales = imagenes.findByProductoIdOrderByIdAsc(productoId);
         if (actuales.size() >= MAX_IMAGENES_POR_PRODUCTO) {
             throw new ReglaNegocio("Un producto no puede tener más de " + MAX_IMAGENES_POR_PRODUCTO + " imágenes");
         }
 
+        return guardarImagen(productoId, archivo);
+    }
+
+    private ImagenDto guardarImagen(Long productoId, MultipartFile archivo) {
         ArchivoGuardado guardada = storage.guardar(archivo);
-        try {
-            ImagenProducto entidad = imagenes.save(new ImagenProducto(
-                    productoId,
-                    guardada.nombreArchivo(),
-                    guardada.tipoMime(),
-                    guardada.tamanoBytes()
-            ));
-            return ImagenDto.desde(entidad);
-        } catch (RuntimeException e) {
-            storage.eliminarSiExiste(guardada.nombreArchivo());
-            throw e;
-        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                if (status == STATUS_ROLLED_BACK) {
+                    storage.eliminarSiExiste(guardada.nombreArchivo());
+                }
+            }
+        });
+        ImagenProducto entidad = imagenes.save(new ImagenProducto(
+                productoId, guardada.nombreArchivo(), guardada.tipoMime(), guardada.tamanoBytes()));
+        return ImagenDto.desde(entidad);
     }
 
     @Transactional
