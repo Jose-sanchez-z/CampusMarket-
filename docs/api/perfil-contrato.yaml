@@ -1,0 +1,176 @@
+openapi: 3.0.3
+info:
+  title: CampusMarket - Contrato de perfil y contactos (Sprint 2)
+  version: 1.0.0
+  description: |
+    Endpoints de perfil y privacidad de contactos (HU-05, S2-T10). Responsable: E07. Consumidor: E04.
+
+    **Sesión:** todos los endpoints exigen la cookie HttpOnly `CM_SESION` (ver contrato de autenticación).
+    Sin sesión válida responden 401. Envía las peticiones con credenciales
+    (`credentials: 'include'` en fetch o `withCredentials: true` en Axios).
+
+    **El usuario sale siempre de la sesión.** Ningún endpoint recibe el id del usuario: si el cuerpo trae
+    `usuarioId` u otro campo desconocido en los contactos, se ignora.
+
+    **Privacidad (CA-05-02):** los contactos son privados por defecto. Un contacto privado solo lo ve su dueño
+    en `GET /usuarios/yo`; nunca sale en respuestas públicas.
+
+    **Formato de error:** `{ "mensaje": "texto" }`.
+servers:
+  - url: http://localhost:8080
+    description: Entorno local
+tags:
+  - name: Perfil
+  - name: Contactos
+security:
+  - cookieSesion: []
+paths:
+  /usuarios/yo:
+    get:
+      tags: [Perfil]
+      summary: Ver mi perfil y todos mis contactos (CA-05-01)
+      description: Devuelve id, nombre, correo y TODOS los contactos del usuario en sesión, incluidos los privados (son suyos).
+      responses:
+        '200':
+          description: Perfil del usuario en sesión.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Perfil' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+    patch:
+      tags: [Perfil]
+      summary: Actualizar mi nombre (CA-05-01)
+      description: |
+        Acepta únicamente `nombre` (1 a 120 caracteres; se recortan los espacios).
+        Cualquier otro campo (`rol`, `estado`, `correo`, `id`...) se rechaza con 422 y no se aplica nada.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [nombre]
+              properties:
+                nombre: { type: string, example: Ana María }
+      responses:
+        '200':
+          description: Perfil actualizado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Perfil' }
+        '400': { description: Cuerpo ausente o JSON inválido., content: { application/json: { schema: { $ref: '#/components/schemas/Mensaje' } } } }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '422': { $ref: '#/components/responses/Invalido' }
+  /usuarios/yo/contactos:
+    post:
+      tags: [Contactos]
+      summary: Agregar un contacto (CA-05-01)
+      description: |
+        Crea un contacto del usuario en sesión. Es **privado por defecto** (`esPublico` false si no se envía).
+        Formato del `valor` según el `tipo`:
+        - `WHATSAPP`: solo dígitos con indicativo de país, 10 a 15 (ej. `573001234567`). Sin `+`, espacios ni guiones.
+        - `TELEFONO`: 7 a 15 dígitos, con `+` opcional al inicio.
+        - `CORREO`: dirección de correo válida (se guarda en minúsculas).
+        - `INSTAGRAM`: usuario con letras, números, punto o guion bajo (hasta 30), `@` opcional.
+        - `TELEGRAM`: usuario de 3 a 32 letras, números o guion bajo, `@` opcional.
+        - `OTRO`: texto libre, no vacío (hasta 150 caracteres).
+        El `tipo` no distingue mayúsculas y se devuelve en mayúsculas.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tipo, valor]
+              properties:
+                tipo: { type: string, enum: [WHATSAPP, TELEFONO, CORREO, INSTAGRAM, TELEGRAM, OTRO], example: WHATSAPP }
+                valor: { type: string, example: '573001234567' }
+                esPublico: { type: boolean, default: false, example: false }
+      responses:
+        '201':
+          description: Contacto creado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Contacto' }
+        '400': { description: Cuerpo ausente o JSON inválido., content: { application/json: { schema: { $ref: '#/components/schemas/Mensaje' } } } }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '422': { $ref: '#/components/responses/Invalido' }
+  /usuarios/yo/contactos/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    patch:
+      tags: [Contactos]
+      summary: Marcar un contacto como público o privado (CA-05-02)
+      description: Solo el dueño puede cambiarlo. Si el contacto no existe o es de otro usuario responde 404.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [esPublico]
+              properties:
+                esPublico: { type: boolean, example: true }
+      responses:
+        '200':
+          description: Contacto actualizado.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Contacto' }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+        '422': { $ref: '#/components/responses/Invalido' }
+    delete:
+      tags: [Contactos]
+      summary: Eliminar un contacto
+      description: Solo el dueño puede eliminarlo. Si el contacto no existe o es de otro usuario responde 404.
+      responses:
+        '204': { description: Contacto eliminado. }
+        '401': { $ref: '#/components/responses/NoAutenticado' }
+        '404': { $ref: '#/components/responses/NoEncontrado' }
+components:
+  securitySchemes:
+    cookieSesion:
+      type: apiKey
+      in: cookie
+      name: CM_SESION
+  responses:
+    NoAutenticado:
+      description: Sin sesión válida.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Mensaje' }
+    NoEncontrado:
+      description: El contacto no existe o no pertenece al usuario en sesión.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Mensaje' }
+    Invalido:
+      description: Dato inválido (campo no autorizado, tipo no permitido o formato incorrecto).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Mensaje' }
+  schemas:
+    Mensaje:
+      type: object
+      properties:
+        mensaje: { type: string, example: Contacto no encontrado }
+    Contacto:
+      type: object
+      properties:
+        id: { type: integer, format: int64, example: 7 }
+        tipo: { type: string, enum: [WHATSAPP, TELEFONO, CORREO, INSTAGRAM, TELEGRAM, OTRO], example: WHATSAPP }
+        valor: { type: string, example: '573001234567' }
+        esPublico: { type: boolean, example: false }
+    Perfil:
+      type: object
+      properties:
+        id: { type: integer, format: int64, example: 1 }
+        nombre: { type: string, example: Ana }
+        correo: { type: string, example: ana@uni.edu }
+        contactos:
+          type: array
+          items: { $ref: '#/components/schemas/Contacto' }
