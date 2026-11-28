@@ -4,10 +4,12 @@ import com.campusmarket.demo.catalogo.CatalogoException.*;
 import com.campusmarket.demo.categoria.Categoria;
 import com.campusmarket.demo.categoria.CategoriaRepository;
 import com.campusmarket.demo.categoria.CategoriaService;
+import com.campusmarket.demo.producto.ImagenStorageService.ArchivoGuardado;
 import com.campusmarket.demo.sesion.Usuario;
 import com.campusmarket.demo.sesion.UsuarioRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -15,9 +17,16 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/** Lógica de negocio para productos, catálogo simple y verificación de titularidad (S2-T11). */
+/** Lógica de negocio para productos, catálogo simple, edición e imágenes (S2-T11 / S2-T12). */
 @Service
 public class ProductoService {
+
+    public static final int MAX_IMAGENES_POR_PRODUCTO = 5;
+    private static final Set<String> ESTADOS_VALIDOS = Set.of(
+            Producto.ESTADO_DISPONIBLE,
+            Producto.ESTADO_INACTIVO,
+            Producto.ESTADO_VENDIDO
+    );
 
     public record ImagenDto(Long id, String url, String tipoMime, Long tamanoBytes) {
         static ImagenDto desde(ImagenProducto img) {
@@ -46,22 +55,24 @@ public class ProductoService {
     private final CategoriaRepository categorias;
     private final CategoriaService categoriaService;
     private final UsuarioRepository usuarios;
+    private final ImagenStorageService storage;
 
     public ProductoService(ProductoRepository productos,
                            ImagenProductoRepository imagenes,
                            CategoriaRepository categorias,
                            CategoriaService categoriaService,
-                           UsuarioRepository usuarios) {
+                           UsuarioRepository usuarios,
+                           ImagenStorageService storage) {
         this.productos = productos;
         this.imagenes = imagenes;
         this.categorias = categorias;
         this.categoriaService = categoriaService;
         this.usuarios = usuarios;
+        this.storage = storage;
     }
 
     /**
      * Función reutilizable de titularidad ("¿este producto es de este usuario?").
-     * Pensada para S2-T12 (edición/retiro) y Sprint 3 (descuentos, venta).
      */
     @Transactional(readOnly = true)
     public boolean esPropietario(Long productoId, Long usuarioId) {
@@ -106,6 +117,93 @@ public class ProductoService {
         ));
 
         return armarRespuesta(guardado, categoria.getNombre(), vendedor.getNombre(), List.of());
+    }
+
+    @Transactional
+    public ProductoResponse editar(Long productoId, Usuario vendedor, String titulo, String descripcion, Long categoriaId, BigDecimal precio) {
+        Producto producto = verificarPropietario(productoId, vendedor);
+
+        if (Producto.ESTADO_VENDIDO.equals(producto.getEstado())) {
+            throw new ReglaNegocio("No se puede editar un producto marcado como vendido");
+        }
+
+        String tituloLimpio = validarTexto(titulo, "El título es obligatorio", 150, "El título no puede superar 150 caracteres");
+        String descLimpia = validarTexto(descripcion, "La descripción es obligatoria", 10000, "La descripción es demasiado larga");
+        BigDecimal precioValido = validarPrecio(precio);
+        if (categoriaId == null) {
+            throw new IllegalArgumentException("La categoría es obligatoria");
+        }
+
+        if (!categoriaId.equals(producto.getCategoriaId())) {
+            categoriaService.obtenerActiva(categoriaId);
+            producto.setCategoriaId(categoriaId);
+        }
+
+        producto.setTitulo(tituloLimpio);
+        producto.setDescripcion(descLimpia);
+        producto.setPrecio(precioValido);
+
+        Producto actualizado = productos.save(producto);
+        return enriquecerLista(List.of(actualizado)).get(0);
+    }
+
+    @Transactional
+    public ProductoResponse cambiarEstado(Long productoId, Usuario vendedor, String nuevoEstadoRaw) {
+        Producto producto = verificarPropietario(productoId, vendedor);
+
+        if (nuevoEstadoRaw == null || nuevoEstadoRaw.trim().isEmpty()) {
+            throw new IllegalArgumentException("El estado es obligatorio");
+        }
+        String nuevoEstado = nuevoEstadoRaw.trim().toUpperCase();
+        if (!ESTADOS_VALIDOS.contains(nuevoEstado)) {
+            throw new IllegalArgumentException("Estado inválido. Valores permitidos: DISPONIBLE, INACTIVO, VENDIDO");
+        }
+        if (Producto.ESTADO_VENDIDO.equals(producto.getEstado()) && !Producto.ESTADO_VENDIDO.equals(nuevoEstado)) {
+            throw new ReglaNegocio("Un producto vendido no puede volver a activarse");
+        }
+
+        producto.setEstado(nuevoEstado);
+        Producto actualizado = productos.save(producto);
+        return enriquecerLista(List.of(actualizado)).get(0);
+    }
+
+    @Transactional
+    public ImagenDto agregarImagen(Long productoId, Usuario vendedor, MultipartFile archivo) {
+        verificarPropietario(productoId, vendedor);
+
+        List<ImagenProducto> actuales = imagenes.findByProductoIdOrderByIdAsc(productoId);
+        if (actuales.size() >= MAX_IMAGENES_POR_PRODUCTO) {
+            throw new ReglaNegocio("Un producto no puede tener más de " + MAX_IMAGENES_POR_PRODUCTO + " imágenes");
+        }
+
+        ArchivoGuardado guardada = storage.guardar(archivo);
+        try {
+            ImagenProducto entidad = imagenes.save(new ImagenProducto(
+                    productoId,
+                    guardada.nombreArchivo(),
+                    guardada.tipoMime(),
+                    guardada.tamanoBytes()
+            ));
+            return ImagenDto.desde(entidad);
+        } catch (RuntimeException e) {
+            storage.eliminarSiExiste(guardada.nombreArchivo());
+            throw e;
+        }
+    }
+
+    @Transactional
+    public void eliminarImagen(Long productoId, Long imagenId, Usuario vendedor) {
+        verificarPropietario(productoId, vendedor);
+
+        ImagenProducto imagen = imagenes.findById(imagenId)
+                .orElseThrow(() -> new RecursoNoEncontrado("Imagen no encontrada"));
+
+        if (!imagen.getProductoId().equals(productoId)) {
+            throw new RecursoNoEncontrado("La imagen no pertenece a este producto");
+        }
+
+        imagenes.delete(imagen);
+        storage.eliminarSiExiste(imagen.getNombreArchivo());
     }
 
     @Transactional(readOnly = true)
@@ -172,7 +270,7 @@ public class ProductoService {
                 p.getTitulo(),
                 p.getDescripcion(),
                 p.getPrecio(),
-                p.getPrecio(), // En Sprint 2 no hay descuento; Sprint 3 lo calcula sobre este campo
+                p.getPrecio(),
                 p.getEstado(),
                 p.getCategoriaId(),
                 catNombre,
