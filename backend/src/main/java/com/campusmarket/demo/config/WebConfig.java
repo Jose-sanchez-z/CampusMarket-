@@ -45,8 +45,9 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         Path rutaAbsoluta = Paths.get(directorioImagenes).toAbsolutePath().normalize();
+        String ubicacion = rutaAbsoluta.toUri().toString();
         registry.addResourceHandler("/imagenes/**")
-                .addResourceLocations(rutaAbsoluta.toUri().toString());
+                .addResourceLocations(ubicacion.endsWith("/") ? ubicacion : ubicacion + "/");
     }
 
     /** Compártelo con E07 (registro): un solo bean de PasswordEncoder en todo el proyecto. */

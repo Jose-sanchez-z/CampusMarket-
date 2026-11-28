@@ -72,12 +72,23 @@ public class ProductoController {
 
     /** Crea un producto en estado DISPONIBLE asociado al usuario de la sesión (CA-07-01). */
     @RequiereSesion
-    @PostMapping
+    @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ProductoResponse> crear(@Valid @RequestBody ProductoRequest body,
                                                   HttpServletRequest req) {
         Usuario vendedor = (Usuario) req.getAttribute(SesionInterceptor.ATTR_USUARIO);
         ProductoResponse creado = servicio.crear(
                 vendedor, body.titulo(), body.descripcion(), body.categoriaId(), body.precio());
+        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
+    }
+
+    @RequiereSesion
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ProductoResponse> publicar(@Valid @RequestPart("producto") ProductoRequest body,
+                                                     @RequestPart("archivo") MultipartFile archivo,
+                                                     HttpServletRequest req) {
+        Usuario vendedor = (Usuario) req.getAttribute(SesionInterceptor.ATTR_USUARIO);
+        ProductoResponse creado = servicio.crearConImagen(
+                vendedor, body.titulo(), body.descripcion(), body.categoriaId(), body.precio(), archivo);
         return ResponseEntity.status(HttpStatus.CREATED).body(creado);
     }
 

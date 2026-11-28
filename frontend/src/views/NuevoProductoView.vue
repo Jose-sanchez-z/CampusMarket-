@@ -6,7 +6,7 @@ import { listarCategorias, crearProducto } from '@/services/productosApi'
 const router = useRouter()
 
 const form = reactive({ titulo: '', descripcion: '', categoriaId: '', precio: '' })
-const imagen = ref(null) // File elegido; aún no se envía (ver S2-T08)
+const imagen = ref(null)
 const errores = reactive({})
 const errorGeneral = ref('')
 const enviando = ref(false)
@@ -43,6 +43,7 @@ function validar() {
   else if (!/^\d+(\.\d{1,2})?$/.test(precio) || Number(precio) <= 0)
     errores.precio = 'Ingresa un precio numérico mayor que cero.'
   if (!imagen.value) errores.imagen = 'Selecciona una imagen.'
+  else if (imagen.value.size > 5 * 1024 * 1024) errores.imagen = 'La imagen no puede superar los 5 MB.'
   return Object.keys(errores).length === 0
 }
 
@@ -53,6 +54,7 @@ function campoDe(mensaje) {
   if (m.includes('descripci')) return 'descripcion'
   if (m.includes('categor')) return 'categoriaId'
   if (m.includes('precio')) return 'precio'
+  if (m.includes('imagen') || m.includes('archivo') || m.includes('formato no permitido')) return 'imagen'
   return null
 }
 
@@ -67,14 +69,14 @@ async function publicar() {
       descripcion: form.descripcion.trim(),
       categoriaId: Number(form.categoriaId),
       precio: Number(String(form.precio).trim()),
-    })
+    }, imagen.value)
     router.push({ path: '/catalogo', query: { publicado: '1' } })
   } catch (e) {
     if (e.status === 401) {
       router.push({ path: '/login', query: { redirect: '/productos/nuevo' } })
     } else if (e.status === 403) {
       errorGeneral.value = e.message || 'Tu cuenta debe estar activa para publicar.'
-    } else if (e.status === 400 || e.status === 422) {
+    } else if (e.status === 400 || e.status === 413 || e.status === 422) {
       const campo = campoDe(e.message)
       if (campo) errores[campo] = e.message
       else errorGeneral.value = e.message

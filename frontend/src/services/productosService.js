@@ -4,7 +4,7 @@
 // de S2-T11 (backend). Con VITE_API_SIMULADA=true se usan datos de ejemplo.
 // Para probar el estado de error en modo simulado, escribe "error" en el buscador.
 // =====================================================================
-import { peticion, ApiError } from './api'
+import { API_URL, peticion, ApiError } from './api'
 
 const SIMULADA = import.meta.env.VITE_API_SIMULADA === 'true'
 
@@ -26,7 +26,11 @@ export async function listarProductos({ busqueda = '', categoria = 'todos' } = {
   if (categoria !== 'todos') params.set('categoria', categoria)
   const consulta = params.toString()
   const { datos } = await peticion(`/productos${consulta ? '?' + consulta : ''}`)
-  return Array.isArray(datos) ? datos : []
+  if (!Array.isArray(datos)) return []
+  return datos.map((producto) => ({
+    ...producto,
+    imagen: producto.imagenPrincipal ? API_URL + producto.imagenPrincipal : producto.imagen,
+  }))
 }
 
 // ---------------------------------------------------------------------
